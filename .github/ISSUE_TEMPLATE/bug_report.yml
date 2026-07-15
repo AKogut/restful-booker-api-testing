@@ -1,0 +1,44 @@
+name: Bug report
+description: Report a defect found in the API or the framework
+labels: ["type:test"]
+body:
+  - type: input
+    id: endpoint
+    attributes:
+      label: Endpoint / Area
+      placeholder: "PATCH /booking/{id}"
+    validations:
+      required: true
+  - type: textarea
+    id: steps
+    attributes:
+      label: Steps to reproduce
+      placeholder: |
+        1. Create a booking
+        2. Send PATCH without token
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected result
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+    validations:
+      required: true
+  - type: dropdown
+    id: severity
+    attributes:
+      label: Severity
+      options:
+        - Blocker
+        - Critical
+        - Major
+        - Minor
+        - Trivial
+    validations:
+      required: true
