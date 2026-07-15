@@ -13,30 +13,30 @@ Production-grade API test automation framework for the [Restful Booker Platform]
 
 The Restful Booker Platform is composed of independent services, each owning a slice of the domain:
 
-| Service | Port | Responsibility |
-| --- | --- | --- |
-| auth | 3004 | Issue, validate, destroy tokens |
-| room | 3001 | Manage bookable rooms |
-| booking | 3000 | Manage bookings and availability |
-| message | 3006 | Guest contact messages |
-| branding | 3002 | Site identity / branding |
-| report | 3005 | Collate rooms and bookings |
+| Service  | Port | Responsibility                   |
+| -------- | ---- | -------------------------------- |
+| auth     | 3004 | Issue, validate, destroy tokens  |
+| room     | 3001 | Manage bookable rooms            |
+| booking  | 3000 | Manage bookings and availability |
+| message  | 3006 | Guest contact messages           |
+| branding | 3002 | Site identity / branding         |
+| report   | 3005 | Collate rooms and bookings       |
 
 Each service exposes Swagger UI and an `/actuator/health` endpoint. Mutating operations are protected by a token issued by the auth service (default credentials: `admin` / `password`).
 
 ## Tech Stack
 
-| Concern | Choice |
-| --- | --- |
-| Language | TypeScript (strict) |
-| HTTP client | Axios (wrapped in a typed `HttpClient`) |
-| Test runner | Vitest |
-| Schema & contract | Zod → JSON Schema |
-| Property-based testing | fast-check |
-| Test data | @faker-js/faker |
-| Deterministic target | Dockerized RBP via docker-compose |
-| Reporting | Allure + JUnit, published to GitHub Pages |
-| CI/CD | GitHub Actions |
+| Concern                | Choice                                    |
+| ---------------------- | ----------------------------------------- |
+| Language               | TypeScript (strict)                       |
+| HTTP client            | Axios (wrapped in a typed `HttpClient`)   |
+| Test runner            | Vitest                                    |
+| Schema & contract      | Zod → JSON Schema                         |
+| Property-based testing | fast-check                                |
+| Test data              | @faker-js/faker                           |
+| Deterministic target   | Dockerized RBP via docker-compose         |
+| Reporting              | Allure + JUnit, published to GitHub Pages |
+| CI/CD                  | GitHub Actions                            |
 
 ## Architecture
 
@@ -80,15 +80,15 @@ npm test
 
 ## Scripts
 
-| Script | Purpose |
-| --- | --- |
-| `npm test` | Run the full suite |
-| `npm run test:smoke` | Fast smoke suite |
-| `npm run test:regression` | Full regression |
-| `npm run test:contract` | Schema, drift & cross-service checks |
-| `npm run typecheck` | TypeScript type checking |
-| `npm run lint` | ESLint |
-| `npm run format` | Prettier |
+| Script                    | Purpose                              |
+| ------------------------- | ------------------------------------ |
+| `npm test`                | Run the full suite                   |
+| `npm run test:smoke`      | Fast smoke suite                     |
+| `npm run test:regression` | Full regression                      |
+| `npm run test:contract`   | Schema, drift & cross-service checks |
+| `npm run typecheck`       | TypeScript type checking             |
+| `npm run lint`            | ESLint                               |
+| `npm run format`          | Prettier                             |
 
 ## Test Modes
 

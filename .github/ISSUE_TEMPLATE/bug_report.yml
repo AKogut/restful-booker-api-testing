@@ -1,12 +1,12 @@
 name: Bug report
 description: Report a defect found in the API or the framework
-labels: ["type:test"]
+labels: ['type:test']
 body:
   - type: input
     id: endpoint
     attributes:
       label: Endpoint / Area
-      placeholder: "PATCH /booking/{id}"
+      placeholder: 'PATCH /booking/{id}'
     validations:
       required: true
   - type: textarea

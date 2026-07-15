@@ -1,0 +1,8 @@
+node_modules
+dist
+coverage
+allure-results
+allure-report
+test-results
+junit.xml
+package-lock.json

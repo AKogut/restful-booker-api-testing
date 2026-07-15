@@ -1,6 +1,6 @@
 name: Feature / task
 description: Propose a new capability, test, or improvement
-labels: ["type:feat"]
+labels: ['type:feat']
 body:
   - type: textarea
     id: goal
@@ -22,4 +22,4 @@ body:
     id: milestone
     attributes:
       label: Milestone
-      placeholder: "M2: Services & Happy Path"
+      placeholder: 'M2: Services & Happy Path'
