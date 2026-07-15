@@ -17,14 +17,14 @@ docs/37-bug-reports
 
 Allowed branch prefixes:
 
-| Prefix | Use for |
-| --- | --- |
-| `feat/` | New capability or feature |
-| `fix/` | Bug fix |
-| `test/` | Test coverage only |
-| `ci/` | CI/CD pipelines |
-| `docs/` | Documentation |
-| `chore/` | Tooling, config, maintenance |
+| Prefix      | Use for                             |
+| ----------- | ----------------------------------- |
+| `feat/`     | New capability or feature           |
+| `fix/`      | Bug fix                             |
+| `test/`     | Test coverage only                  |
+| `ci/`       | CI/CD pipelines                     |
+| `docs/`     | Documentation                       |
+| `chore/`    | Tooling, config, maintenance        |
 | `refactor/` | Internal change, no behavior change |
 
 ## Commit Convention
