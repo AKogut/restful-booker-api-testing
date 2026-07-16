@@ -1,17 +1,10 @@
 import { describe, expect, it } from 'vitest'
 import { getConfig } from '@config/app-config'
 import { createServices } from '@services/service-factory'
+import { adminToken } from '../support/session'
 
 const { auth } = createServices()
 const { credentials } = getConfig()
-
-const issueToken = async (): Promise<string> => {
-  const response = await auth.login(credentials)
-  if (!('token' in response.data)) {
-    throw new Error(`Login failed with status ${response.status}`)
-  }
-  return response.data.token
-}
 
 describe('auth service @smoke', () => {
   it('issues a token for valid credentials', async () => {
@@ -32,7 +25,7 @@ describe('auth service @smoke', () => {
   })
 
   it('confirms an issued token as valid', async () => {
-    const token = await issueToken()
+    const token = await adminToken()
 
     const response = await auth.validate(token)
 
@@ -48,7 +41,7 @@ describe('auth service @smoke', () => {
   })
 
   it('accepts logout for an active token', async () => {
-    const token = await issueToken()
+    const token = await adminToken()
 
     const response = await auth.logout(token)
 
@@ -57,7 +50,7 @@ describe('auth service @smoke', () => {
   })
 
   it.fails('invalidates the token after logout (known RBP defect: token survives)', async () => {
-    const token = await issueToken()
+    const token = await adminToken()
     await auth.logout(token)
 
     const response = await auth.validate(token)
