@@ -23,6 +23,8 @@ export default defineConfig({
       '@models': alias('models'),
       '@schemas': alias('schemas'),
       '@services': alias('services'),
+      '@factories': alias('factories'),
+      '@support': alias('support'),
     },
   },
 })

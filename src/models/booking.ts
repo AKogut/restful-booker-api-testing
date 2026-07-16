@@ -12,11 +12,26 @@ export interface Booking {
   bookingdates: BookingDates
 }
 
-export interface BookingPayload extends Omit<Booking, 'bookingid'> {
+export type UpdateBookingPayload = Omit<Booking, 'bookingid'>
+
+export interface BookingPayload extends UpdateBookingPayload {
   email: string
   phone: string
 }
 
 export interface BookingList {
   bookings: Booking[]
+}
+
+export interface UpdatedBooking {
+  booking: Booking
+  bookingid: number
+}
+
+export interface BookingSummaryEntry {
+  bookingDates: BookingDates
+}
+
+export interface BookingSummary {
+  bookings: BookingSummaryEntry[]
 }
