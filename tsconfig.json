@@ -24,7 +24,9 @@
       "@client/*": ["src/client/*"],
       "@models/*": ["src/models/*"],
       "@schemas/*": ["src/schemas/*"],
-      "@services/*": ["src/services/*"]
+      "@services/*": ["src/services/*"],
+      "@factories/*": ["src/factories/*"],
+      "@support/*": ["src/support/*"]
     }
   },
   "include": ["src", "tests", "vitest.config.ts"]

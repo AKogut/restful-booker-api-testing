@@ -1,8 +1,8 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { Room, RoomPayload } from '@models/room'
 import { createServices } from '@services/service-factory'
-import { roomPayload } from '../factories/room-factory'
-import { adminToken } from '../support/session'
+import { roomPayload } from '@factories/room-factory'
+import { adminToken } from '@support/session'
 
 const { room } = createServices()
 

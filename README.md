@@ -50,6 +50,8 @@ src/
   schemas/    Zod schemas and generated JSON Schema contracts
   services/   AuthService, RoomService, BookingService, MessageService,
               BrandingService, ReportService
+  factories/  faker-based test data builders (rooms, bookings)
+  support/    session and provisioning helpers for suites
 tests/
   smoke/      Fast happy-path checks
   regression/ Full functional coverage

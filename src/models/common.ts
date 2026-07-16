@@ -9,3 +9,9 @@ export interface ErrorsResponse {
 export interface SuccessResponse {
   success: boolean
 }
+
+export interface ValidationErrorResponse {
+  error: string
+  errorCode: number
+  errorMessage: string
+}

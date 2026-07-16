@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest'
 import { getConfig } from '@config/app-config'
 import { createServices } from '@services/service-factory'
-import { adminToken } from '../support/session'
+import { adminToken } from '@support/session'
 
 const { auth } = createServices()
 const { credentials } = getConfig()
