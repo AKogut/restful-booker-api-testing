@@ -1,0 +1,67 @@
+import { describe, expect, it } from 'vitest'
+import { getConfig } from '@config/app-config'
+import { createServices } from '@services/service-factory'
+
+const { auth } = createServices()
+const { credentials } = getConfig()
+
+const issueToken = async (): Promise<string> => {
+  const response = await auth.login(credentials)
+  if (!('token' in response.data)) {
+    throw new Error(`Login failed with status ${response.status}`)
+  }
+  return response.data.token
+}
+
+describe('auth service @smoke', () => {
+  it('issues a token for valid credentials', async () => {
+    const response = await auth.login(credentials)
+
+    expect(response.status).toBe(200)
+    expect(response.data).toEqual({ token: expect.stringMatching(/.+/) as string })
+  })
+
+  it('rejects invalid credentials', async () => {
+    const response = await auth.login({
+      username: credentials.username,
+      password: 'wrong-password',
+    })
+
+    expect(response.status).toBe(401)
+    expect(response.data).toEqual({ error: 'Invalid credentials' })
+  })
+
+  it('confirms an issued token as valid', async () => {
+    const token = await issueToken()
+
+    const response = await auth.validate(token)
+
+    expect(response.status).toBe(200)
+    expect(response.data).toEqual({ valid: true })
+  })
+
+  it('rejects a malformed token', async () => {
+    const response = await auth.validate('malformed-token')
+
+    expect(response.status).toBe(403)
+    expect(response.data).toEqual({ error: 'Invalid token' })
+  })
+
+  it('accepts logout for an active token', async () => {
+    const token = await issueToken()
+
+    const response = await auth.logout(token)
+
+    expect(response.status).toBe(200)
+    expect(response.data).toEqual({ success: true })
+  })
+
+  it.fails('invalidates the token after logout (known RBP defect: token survives)', async () => {
+    const token = await issueToken()
+    await auth.logout(token)
+
+    const response = await auth.validate(token)
+
+    expect(response.status).toBe(403)
+  })
+})
