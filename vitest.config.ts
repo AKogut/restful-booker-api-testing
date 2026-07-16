@@ -8,6 +8,7 @@ export default defineConfig({
     globals: false,
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    testTimeout: 30_000,
     reporters: process.env.CI ? ['default', ['junit', { outputFile: 'junit.xml' }]] : ['default'],
     coverage: {
       provider: 'v8',

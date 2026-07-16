@@ -12,6 +12,7 @@
   "scripts": {
     "test": "vitest run --passWithNoTests",
     "test:watch": "vitest",
+    "test:unit": "vitest run --passWithNoTests tests/unit",
     "test:smoke": "vitest run --passWithNoTests tests/smoke",
     "test:regression": "vitest run --passWithNoTests tests/regression",
     "test:negative": "vitest run --passWithNoTests tests/negative",
