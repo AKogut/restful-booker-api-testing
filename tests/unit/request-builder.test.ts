@@ -27,6 +27,12 @@ describe('RequestBuilder', () => {
     expect(builder.build()).toMatchObject({ method, path: '/room' })
   })
 
+  it('skips auth injection when no token is given', () => {
+    const request = RequestBuilder.put('/room/1').withToken(undefined).build()
+
+    expect(request.headers).toEqual({})
+  })
+
   it('injects the auth token as a cookie', () => {
     const request = RequestBuilder.put('/room/1').withToken('abc123').build()
 

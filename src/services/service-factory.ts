@@ -1,9 +1,11 @@
 import { HttpClient } from '@client/http-client'
 import { getConfig, type AppConfig } from '@config/app-config'
 import { AuthService } from './auth-service'
+import { RoomService } from './room-service'
 
 export interface Services {
   readonly auth: AuthService
+  readonly room: RoomService
 }
 
 export const createServices = (config: AppConfig = getConfig()): Services => {
@@ -12,5 +14,6 @@ export const createServices = (config: AppConfig = getConfig()): Services => {
 
   return {
     auth: new AuthService(clientFor(config.services.auth)),
+    room: new RoomService(clientFor(config.services.room)),
   }
 }

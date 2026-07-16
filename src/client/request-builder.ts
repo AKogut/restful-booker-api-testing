@@ -42,8 +42,8 @@ export class RequestBuilder {
     return this
   }
 
-  withToken(token: string): this {
-    return this.withHeader('Cookie', `token=${token}`)
+  withToken(token?: string): this {
+    return token === undefined ? this : this.withHeader('Cookie', `token=${token}`)
   }
 
   build(): ApiRequest {
