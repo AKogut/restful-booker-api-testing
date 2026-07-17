@@ -1,0 +1,40 @@
+name: Tests (manual)
+
+on:
+  workflow_dispatch:
+    inputs:
+      suite:
+        description: Which suite to run
+        type: choice
+        default: all
+        options:
+          - all
+          - unit
+          - smoke
+          - contract
+          - negative
+          - live
+
+jobs:
+  run:
+    name: ${{ inputs.suite }} suite
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: cp .env.example .env
+      - name: Run the ${{ inputs.suite }} suite
+        run: |
+          case "${{ inputs.suite }}" in
+            all) npm test ;;
+            unit) npm run test:unit ;;
+            smoke) npm run test:smoke ;;
+            contract) npm run test:contract ;;
+            negative) npm run test:negative ;;
+            live) npm run test:live ;;
+            *) echo "Unknown suite: ${{ inputs.suite }}" && exit 1 ;;
+          esac

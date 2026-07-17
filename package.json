@@ -17,6 +17,7 @@
     "test:regression": "vitest run --passWithNoTests tests/regression",
     "test:negative": "vitest run --passWithNoTests tests/negative",
     "test:contract": "HEALTHCHECK=1 vitest run --passWithNoTests tests/contract",
+    "test:live": "HEALTHCHECK=1 vitest run --passWithNoTests tests/smoke tests/contract tests/negative",
     "coverage": "vitest run --coverage --passWithNoTests",
     "test:report": "HEALTHCHECK=1 ALLURE=1 vitest run --passWithNoTests",
     "allure:generate": "allure generate allure-results --clean -o allure-report",
