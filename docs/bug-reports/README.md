@@ -8,3 +8,4 @@ Defects found in the Restful Booker Platform while building this framework. Each
 | [BUG-002](BUG-002-deleted-room-returns-500.md)       | Fetching a deleted room returns 500 instead of 404                    | room    | Minor    | Open   |
 | [BUG-003](BUG-003-booking-update-leaks-internals.md) | Booking update validation errors leak internal implementation details | booking | Major    | Open   |
 | [BUG-004](BUG-004-message-inbox-public.md)           | Message inbox is readable without authentication                      | message | Major    | Open   |
+| [BUG-005](BUG-005-booking-nonexistent-room.md)       | A booking can be created for a non-existent room                      | booking | Major    | Open   |
