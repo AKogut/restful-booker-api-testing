@@ -10,10 +10,10 @@
     "node": ">=22"
   },
   "scripts": {
-    "test": "vitest run --passWithNoTests",
+    "test": "HEALTHCHECK=1 vitest run --passWithNoTests",
     "test:watch": "vitest",
     "test:unit": "vitest run --passWithNoTests tests/unit",
-    "test:smoke": "vitest run --passWithNoTests tests/smoke",
+    "test:smoke": "HEALTHCHECK=1 vitest run --passWithNoTests tests/smoke",
     "test:regression": "vitest run --passWithNoTests tests/regression",
     "test:negative": "vitest run --passWithNoTests tests/negative",
     "test:contract": "vitest run --passWithNoTests tests/contract",

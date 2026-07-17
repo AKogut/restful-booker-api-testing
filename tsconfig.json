@@ -25,6 +25,7 @@
       "@models/*": ["src/models/*"],
       "@schemas/*": ["src/schemas/*"],
       "@services/*": ["src/services/*"],
+      "@health/*": ["src/health/*"],
       "@factories/*": ["src/factories/*"],
       "@support/*": ["src/support/*"]
     }

@@ -8,6 +8,7 @@ export default defineConfig({
     globals: false,
     environment: 'node',
     include: ['tests/**/*.test.ts'],
+    globalSetup: ['./tests/global-setup.ts'],
     testTimeout: 30_000,
     reporters: process.env.CI ? ['default', ['junit', { outputFile: 'junit.xml' }]] : ['default'],
     coverage: {
@@ -23,6 +24,7 @@ export default defineConfig({
       '@models': alias('models'),
       '@schemas': alias('schemas'),
       '@services': alias('services'),
+      '@health': alias('health'),
       '@factories': alias('factories'),
       '@support': alias('support'),
     },
