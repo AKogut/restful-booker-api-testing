@@ -16,8 +16,9 @@
     "test:smoke": "HEALTHCHECK=1 vitest run --passWithNoTests tests/smoke",
     "test:regression": "vitest run --passWithNoTests tests/regression",
     "test:negative": "vitest run --passWithNoTests tests/negative",
-    "test:contract": "vitest run --passWithNoTests tests/contract",
+    "test:contract": "HEALTHCHECK=1 vitest run --passWithNoTests tests/contract",
     "coverage": "vitest run --coverage --passWithNoTests",
+    "schema:export": "tsx scripts/export-schemas.ts",
     "typecheck": "tsc --noEmit",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
@@ -37,9 +38,11 @@
     "husky": "^9.1.7",
     "lint-staged": "^15.3.0",
     "prettier": "^3.4.0",
+    "tsx": "^4.23.1",
     "typescript": "^5.7.0",
     "typescript-eslint": "^8.19.0",
-    "vitest": "^3.0.0"
+    "vitest": "^3.0.0",
+    "zod-to-json-schema": "^3.25.2"
   },
   "lint-staged": {
     "*.{ts,mjs,cjs,js}": [

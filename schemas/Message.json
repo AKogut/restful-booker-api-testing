@@ -1,0 +1,38 @@
+{
+  "$ref": "#/definitions/Message",
+  "definitions": {
+    "Message": {
+      "type": "object",
+      "properties": {
+        "messageid": {
+          "type": "integer"
+        },
+        "name": {
+          "type": "string"
+        },
+        "email": {
+          "type": "string"
+        },
+        "phone": {
+          "type": "string"
+        },
+        "subject": {
+          "type": "string"
+        },
+        "description": {
+          "type": "string"
+        }
+      },
+      "required": [
+        "messageid",
+        "name",
+        "email",
+        "phone",
+        "subject",
+        "description"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

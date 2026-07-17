@@ -92,6 +92,10 @@ npm test
 | `npm run lint`            | ESLint                               |
 | `npm run format`          | Prettier                             |
 
+## Contracts
+
+Zod schemas in `src/schemas/` are the single source of truth for every service response. `npm run schema:export` renders them to language-agnostic JSON Schema files under `schemas/`. The `@contract` suite validates live responses against these schemas, detects drift (unexpected fields, malformed dates) via strict parsing, and asserts cross-service consistency (a booking surfaces in the room report).
+
 ## Test Modes
 
 - **live** — runs against the hosted platform at `automationintesting.online`

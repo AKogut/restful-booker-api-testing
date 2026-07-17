@@ -1,0 +1,65 @@
+{
+  "$ref": "#/definitions/UpdatedBooking",
+  "definitions": {
+    "UpdatedBooking": {
+      "type": "object",
+      "properties": {
+        "bookingid": {
+          "type": "integer"
+        },
+        "booking": {
+          "type": "object",
+          "properties": {
+            "bookingid": {
+              "type": "integer"
+            },
+            "roomid": {
+              "type": "integer"
+            },
+            "firstname": {
+              "type": "string"
+            },
+            "lastname": {
+              "type": "string"
+            },
+            "depositpaid": {
+              "type": "boolean"
+            },
+            "bookingdates": {
+              "type": "object",
+              "properties": {
+                "checkin": {
+                  "type": "string",
+                  "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+                },
+                "checkout": {
+                  "$ref": "#/definitions/UpdatedBooking/properties/booking/properties/bookingdates/properties/checkin"
+                }
+              },
+              "required": [
+                "checkin",
+                "checkout"
+              ],
+              "additionalProperties": false
+            }
+          },
+          "required": [
+            "bookingid",
+            "roomid",
+            "firstname",
+            "lastname",
+            "depositpaid",
+            "bookingdates"
+          ],
+          "additionalProperties": false
+        }
+      },
+      "required": [
+        "bookingid",
+        "booking"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}
