@@ -1,6 +1,8 @@
 # restful-booker-api-testing
 
 [![CI](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/ci.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/ci.yml)
+[![Report](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/report.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/report.yml)
+[![Allure report](https://img.shields.io/badge/Allure_report-live-brightgreen.svg)](https://akogut.github.io/restful-booker-api-testing/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-LTS-brightgreen.svg)](./.nvmrc)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6.svg)](./tsconfig.json)
@@ -105,7 +107,9 @@ Select the mode via `TEST_MODE` in `.env`.
 
 ## Reporting
 
-Allure and JUnit reports are produced in CI. The merged Allure report is published to GitHub Pages on every `main` build.
+- **JUnit** XML is produced by the CI pipeline for every run.
+- **Allure** results are generated with `npm run test:report`; `npm run allure:generate` renders the HTML report (`npm run allure:open` to view it locally).
+- The [Report workflow](.github/workflows/report.yml) runs the full suite, builds the Allure report and publishes it to **[GitHub Pages](https://akogut.github.io/restful-booker-api-testing/)** on every `main` build and on a nightly schedule (03:00 UTC), so the live report always reflects the latest run against the platform.
 
 ## Documentation
 
