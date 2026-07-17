@@ -1,0 +1,18 @@
+{
+  "$ref": "#/definitions/TokenValidation",
+  "definitions": {
+    "TokenValidation": {
+      "type": "object",
+      "properties": {
+        "valid": {
+          "type": "boolean"
+        }
+      },
+      "required": [
+        "valid"
+      ],
+      "additionalProperties": false
+    }
+  },
+  "$schema": "http://json-schema.org/draft-07/schema#"
+}

@@ -6,3 +6,4 @@ allure-report
 test-results
 junit.xml
 package-lock.json
+schemas
