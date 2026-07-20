@@ -72,7 +72,7 @@ let cached: AppConfig | undefined
 
 export const getConfig = (): AppConfig => {
   if (!cached) {
-    loadDotenv()
+    loadDotenv({ path: process.env.ENV_FILE ?? '.env' })
     cached = buildConfig()
   }
   return cached

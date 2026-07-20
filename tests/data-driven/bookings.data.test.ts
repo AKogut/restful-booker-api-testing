@@ -3,9 +3,12 @@ import { bookingPayload } from '@factories/booking-factory'
 import type { BookingPayload } from '@models/booking'
 import type { Room } from '@models/room'
 import { createServices } from '@services/service-factory'
+import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
+import { validationMessages } from '@support/validation'
 import { adminToken } from '@support/session'
 import bookingCases from '../data/booking-cases.json'
+import { supports } from '@profiles/target-profile'
 
 interface BookingCase {
   name: string
@@ -59,9 +62,10 @@ describe('booking creation dataset @data-driven', () => {
 
       expect(response.status).toBe(testCase.expected.status)
 
-      if ('bookingid' in response.data) {
-        createdBookingIds.add(response.data.bookingid)
-        expect(response.data).toMatchObject({
+      const created = createdBooking(response.data)
+      if (created !== undefined) {
+        createdBookingIds.add(created.bookingid)
+        expect(created).toMatchObject({
           roomid: payload.roomid,
           firstname: payload.firstname,
           bookingdates: payload.bookingdates,
@@ -70,15 +74,16 @@ describe('booking creation dataset @data-driven', () => {
       }
 
       if (testCase.expected.errors !== undefined) {
-        if (!('errors' in response.data)) {
+        const messages = validationMessages(response.data)
+        if (messages === undefined) {
           throw new Error(
             `Expected a validation error body, received ${JSON.stringify(response.data)}`,
           )
         }
-        expect(response.data.errors).toEqual(testCase.expected.errors)
+        expect(messages).toEqual(testCase.expected.errors)
       }
 
-      if (testCase.expected.error !== undefined) {
+      if (testCase.expected.error !== undefined && supports('auth.describesOutcome')) {
         expect(response.data).toEqual({ error: testCase.expected.error })
       }
     },

@@ -74,6 +74,17 @@ A shared demo produces two kinds of red that must not be conflated:
 
 Retries are deliberately narrow: idempotent methods only, transient statuses only, capped attempts, and disabled outright in the negative suites via `createServicesWithoutRetry()`. Every attempt is recorded in the exchange log, so a call that only passes on retry is visible rather than hidden — a retry policy that silently masks degradation would be worse than no retry at all.
 
+## Targets
+
+| Target  | Command              | Purpose                                                          |
+| ------- | -------------------- | ---------------------------------------------------------------- |
+| `live`  | `npm run test:live`  | The deployed platform — the target every defect report describes |
+| `local` | `npm run test:local` | RBP `2.2` in Docker — offline, disposable, safe to mutate freely |
+
+They run **different versions of the same API**, so expectations are declared per target in `src/profiles/target-profile.ts` rather than hard-coded ([inventory](target-differences.md)).
+
+`local` is a development and exploration target, not a replacement for `live`: the defect guards document live's behaviour and are skipped elsewhere, so a green local run is not evidence about the deployed platform. CI gates on `live`.
+
 ## CI strategy
 
 | Trigger             | What runs                                                                                |

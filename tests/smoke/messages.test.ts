@@ -3,6 +3,8 @@ import { messagePayload } from '@factories/message-factory'
 import type { MessagePayload } from '@models/message'
 import { createServices } from '@services/service-factory'
 import { adminToken } from '@support/session'
+import { expectedStatus, supports } from '@profiles/target-profile'
+import { itWhenSupported } from '../support/target'
 
 const { message } = createServices()
 
@@ -11,8 +13,10 @@ const createdMessageIds = new Set<number>()
 
 const createMessage = async (payload: MessagePayload): Promise<number> => {
   const creation = await message.create(payload)
-  expect(creation.status).toBe(200)
-  expect(creation.data).toEqual({ success: true })
+  expect(creation.status).toBe(expectedStatus('resource.created'))
+  if (supports('auth.describesOutcome')) {
+    expect(creation.data).toEqual({ success: true })
+  }
 
   const listing = await message.list()
   const created = listing.data.messages.find((entry) => entry.subject === payload.subject)
@@ -107,11 +111,14 @@ describe('message service @smoke', () => {
     expect(response.status).toBe(403)
   })
 
-  it.fails('protects the inbox from anonymous reads (known RBP defect: exposes PII)', async () => {
-    const id = await createMessage(messagePayload())
+  itWhenSupported('defects.documented').fails(
+    'protects the inbox from anonymous reads (known RBP defect: exposes PII)',
+    async () => {
+      const id = await createMessage(messagePayload())
 
-    const response = await message.getById(id)
+      const response = await message.getById(id)
 
-    expect(response.status).toBe(401)
-  })
+      expect(response.status).toBe(401)
+    },
+  )
 })

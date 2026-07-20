@@ -1,0 +1,50 @@
+name: rbp
+
+services:
+  rbp-auth:
+    image: mwinteringham/restfulbookerplatform_auth:2.2
+    ports:
+      - '3004:3004'
+    restart: unless-stopped
+
+  rbp-booking:
+    image: mwinteringham/restfulbookerplatform_booking:2.2
+    ports:
+      - '3000:3000'
+    depends_on:
+      - rbp-auth
+      - rbp-room
+    restart: unless-stopped
+
+  rbp-room:
+    image: mwinteringham/restfulbookerplatform_room:2.2
+    ports:
+      - '3001:3001'
+    depends_on:
+      - rbp-auth
+    restart: unless-stopped
+
+  rbp-branding:
+    image: mwinteringham/restfulbookerplatform_branding:2.2
+    ports:
+      - '3002:3002'
+    depends_on:
+      - rbp-auth
+    restart: unless-stopped
+
+  rbp-report:
+    image: mwinteringham/restfulbookerplatform_report:2.2
+    ports:
+      - '3005:3005'
+    depends_on:
+      - rbp-booking
+      - rbp-room
+    restart: unless-stopped
+
+  rbp-message:
+    image: mwinteringham/restfulbookerplatform_message:2.2
+    ports:
+      - '3006:3006'
+    depends_on:
+      - rbp-auth
+    restart: unless-stopped

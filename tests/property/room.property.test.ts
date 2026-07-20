@@ -5,6 +5,7 @@ import { nextRoomName } from '@factories/room-factory'
 import type { RoomPayload } from '@models/room'
 import { createServices } from '@services/service-factory'
 import { adminToken } from '@support/session'
+import { expectedStatus } from '@profiles/target-profile'
 
 const { room } = createServices()
 
@@ -34,7 +35,7 @@ describe('room properties @property', () => {
         }
 
         const created = await room.create(payload, token)
-        if (created.status !== 200) {
+        if (created.status !== expectedStatus('resource.created')) {
           throw new Error(
             `Create failed with ${created.status}: ${JSON.stringify(created.data)} for ${JSON.stringify(payload)}`,
           )

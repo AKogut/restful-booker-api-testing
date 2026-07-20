@@ -3,8 +3,11 @@ import type { Booking, BookingPayload } from '@models/booking'
 import type { Room } from '@models/room'
 import { createServices } from '@services/service-factory'
 import { bookingPayload } from '@factories/booking-factory'
+import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
 import { adminToken } from '@support/session'
+import { expectedStatus, supports } from '@profiles/target-profile'
+import { itWhenSupported } from '../support/target'
 
 const { booking, room } = createServices()
 
@@ -14,11 +17,12 @@ const createdBookingIds = new Set<number>()
 
 const createBooking = async (payload: BookingPayload): Promise<Booking> => {
   const response = await booking.create(payload)
-  if (!('bookingid' in response.data)) {
+  const created = createdBooking(response.data)
+  if (created === undefined) {
     throw new Error(`Booking creation failed with status ${response.status}`)
   }
-  createdBookingIds.add(response.data.bookingid)
-  return response.data
+  createdBookingIds.add(created.bookingid)
+  return created
 }
 
 beforeAll(async () => {
@@ -40,7 +44,12 @@ describe('booking service @smoke', () => {
     const response = await booking.create(payload)
 
     expect(response.status).toBe(201)
-    expect(response.data).toEqual({
+    const created = createdBooking(response.data)
+    if (created === undefined) {
+      throw new Error(`Booking creation failed with status ${response.status}`)
+    }
+    createdBookingIds.add(created.bookingid)
+    expect(created).toEqual({
       bookingid: expect.any(Number) as number,
       roomid: payload.roomid,
       firstname: payload.firstname,
@@ -48,9 +57,6 @@ describe('booking service @smoke', () => {
       depositpaid: payload.depositpaid,
       bookingdates: payload.bookingdates,
     })
-    if ('bookingid' in response.data) {
-      createdBookingIds.add(response.data.bookingid)
-    }
   })
 
   it('rejects an overlapping booking for the same dates', async () => {
@@ -62,7 +68,9 @@ describe('booking service @smoke', () => {
     )
 
     expect(response.status).toBe(409)
-    expect(response.data).toEqual({ error: 'Failed to create booking' })
+    if (supports('auth.describesOutcome')) {
+      expect(response.data).toEqual({ error: 'Failed to create booking' })
+    }
   })
 
   it('lists bookings for a room when authenticated', async () => {
@@ -80,8 +88,10 @@ describe('booking service @smoke', () => {
   it('rejects listing bookings without a token', async () => {
     const response = await booking.list(testRoom.roomid)
 
-    expect(response.status).toBe(401)
-    expect(response.data).toEqual({ error: 'Authentication required' })
+    expect(response.status).toBe(expectedStatus('authz.missingToken'))
+    if (supports('auth.describesOutcome')) {
+      expect(response.data).toEqual({ error: 'Authentication required' })
+    }
   })
 
   it('returns a booking by id when authenticated', async () => {
@@ -90,7 +100,7 @@ describe('booking service @smoke', () => {
     const response = await booking.getById(created.bookingid, token)
 
     expect(response.status).toBe(200)
-    expect(response.data).toEqual(created)
+    expect(createdBooking(response.data)).toEqual(created)
   })
 
   it('reports booked date ranges in the room summary', async () => {
@@ -151,7 +161,7 @@ describe('booking service @smoke', () => {
     expect(response.status).toBe(403)
   })
 
-  it.fails(
+  itWhenSupported('defects.documented').fails(
     'returns clean validation errors on update (known RBP defect: leaks internals)',
     async () => {
       const created = await createBooking(bookingPayload(testRoom.roomid))

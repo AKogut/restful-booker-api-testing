@@ -48,6 +48,7 @@ export default defineConfig({
       '@health': alias('health'),
       '@factories': alias('factories'),
       '@support': alias('support'),
+      '@profiles': alias('profiles'),
     },
   },
 })

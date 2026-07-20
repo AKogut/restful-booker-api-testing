@@ -94,6 +94,9 @@ npm test
 | `npm run test:unit`     | Hermetic unit tests                       |
 | `npm run test:live`     | All live suites (smoke+contract+negative) |
 | `npm run coverage`      | Full suite with enforced thresholds       |
+| `npm run test:local`    | Live suites against the Docker stack      |
+| `npm run docker:up`     | Start the local RBP stack                 |
+| `npm run docker:down`   | Stop it and drop volumes                  |
 | `npm run test:contract` | Schema, drift & cross-service checks      |
 | `npm run typecheck`     | TypeScript type checking                  |
 | `npm run lint`          | ESLint                                    |
@@ -122,12 +125,34 @@ The platform is a shared public demo that cold-starts, so the framework treats t
 
 Set `RETRY_MAX_ATTEMPTS=1` and `READINESS_TIMEOUT_MS=0` to reproduce the pre-retry, fail-fast behaviour.
 
-## Test Modes
+## Test Targets
 
-- **live** — runs against the hosted platform at `automationintesting.online`
-- **local** — runs against a Dockerized RBP stack (`docker-compose`) for deterministic, offline-friendly, CI-ready runs
+The suite runs against two targets that implement **different versions of the same API**:
 
-Select the mode via `TEST_MODE` in `.env`.
+| Target  | Command              | What it is                                                    |
+| ------- | -------------------- | ------------------------------------------------------------- |
+| `live`  | `npm run test:live`  | The hosted platform at `automationintesting.online`           |
+| `local` | `npm run test:local` | RBP `2.2` images via `docker compose`, offline and disposable |
+
+```bash
+cp .env.local.example .env.local
+npm run docker:up      # start the six services
+npm run test:local     # run every live suite against the container stack
+npm run docker:down    # stop and remove volumes
+```
+
+The target is selected by `ENV_FILE`; each env file sets `TEST_MODE`, which drives the expectation profile.
+
+### They are not the same API
+
+The hosted platform runs code that is not in the open-source project — verified against the `2.2` images, the `latest` images and upstream `trunk` source, all three of which agree with each other and disagree with live. So the suite does not pretend one set of expectations fits both:
+
+```ts
+expect(response.status).toBe(expectedStatus('auth.rejected'))   // 401 live, 403 local
+itWhenSupported('auth.tokenInBody')('returns the token in the body', …)
+```
+
+`src/profiles/target-profile.ts` holds every difference in one place. Full inventory, including why the defect guards are live-only, in [docs/target-differences.md](docs/target-differences.md).
 
 ## Reporting
 

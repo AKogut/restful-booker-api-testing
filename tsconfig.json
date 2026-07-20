@@ -27,7 +27,8 @@
       "@services/*": ["src/services/*"],
       "@health/*": ["src/health/*"],
       "@factories/*": ["src/factories/*"],
-      "@support/*": ["src/support/*"]
+      "@support/*": ["src/support/*"],
+      "@profiles/*": ["src/profiles/*"]
     }
   },
   "include": ["src", "tests", "scripts", "vitest.config.ts"]

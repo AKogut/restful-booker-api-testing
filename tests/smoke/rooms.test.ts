@@ -1,8 +1,10 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import type { Room, RoomPayload } from '@models/room'
+import { expectedStatus, supports } from '@profiles/target-profile'
 import { createServices } from '@services/service-factory'
 import { roomPayload } from '@factories/room-factory'
 import { adminToken } from '@support/session'
+import { itWhenSupported } from '../support/target'
 
 const { room } = createServices()
 
@@ -11,8 +13,10 @@ const createdRoomIds = new Set<number>()
 
 const createRoom = async (payload: RoomPayload): Promise<Room> => {
   const creation = await room.create(payload, token)
-  expect(creation.status).toBe(200)
-  expect(creation.data).toEqual({ success: true })
+  expect(creation.status).toBe(expectedStatus('resource.created'))
+  if (supports('auth.describesOutcome')) {
+    expect(creation.data).toEqual({ success: true })
+  }
 
   const listing = await room.list()
   const created = listing.data.rooms.find((candidate) => candidate.roomName === payload.roomName)
@@ -88,21 +92,26 @@ describe('room service @smoke', () => {
     expect(listing.data.rooms.map((entry) => entry.roomid)).not.toContain(created.roomid)
   })
 
-  it.fails('returns 404 for a deleted room (known RBP defect: responds 500)', async () => {
-    const created = await createRoom(roomPayload())
-    await room.delete(created.roomid, token)
-    createdRoomIds.delete(created.roomid)
+  itWhenSupported('defects.documented').fails(
+    'returns 404 for a deleted room (known RBP defect: responds 500)',
+    async () => {
+      const created = await createRoom(roomPayload())
+      await room.delete(created.roomid, token)
+      createdRoomIds.delete(created.roomid)
 
-    const response = await room.getById(created.roomid)
+      const response = await room.getById(created.roomid)
 
-    expect(response.status).toBe(404)
-  })
+      expect(response.status).toBe(404)
+    },
+  )
 
   it('rejects room creation without a token', async () => {
     const response = await room.create(roomPayload())
 
-    expect(response.status).toBe(401)
-    expect(response.data).toEqual({ errors: ['Authentication required'] })
+    expect(response.status).toBe(expectedStatus('authz.missingToken'))
+    if (supports('auth.describesOutcome')) {
+      expect(response.data).toEqual({ errors: ['Authentication required'] })
+    }
   })
 
   it('rejects room deletion without a token', async () => {
@@ -110,6 +119,6 @@ describe('room service @smoke', () => {
 
     const response = await room.delete(created.roomid)
 
-    expect(response.status).toBe(403)
+    expect(response.status).toBe(expectedStatus('authz.forbidden'))
   })
 })

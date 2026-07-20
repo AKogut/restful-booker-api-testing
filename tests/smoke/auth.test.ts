@@ -1,7 +1,9 @@
 import { describe, expect, it } from 'vitest'
 import { getConfig } from '@config/app-config'
+import { expectedStatus, supports } from '@profiles/target-profile'
 import { createServices } from '@services/service-factory'
-import { adminToken } from '@support/session'
+import { adminToken, extractToken } from '@support/session'
+import { itWhenSupported } from '../support/target'
 
 const { auth } = createServices()
 const { credentials } = getConfig()
@@ -11,6 +13,12 @@ describe('auth service @smoke', () => {
     const response = await auth.login(credentials)
 
     expect(response.status).toBe(200)
+    expect(extractToken(response)).toMatch(/.+/)
+  })
+
+  itWhenSupported('auth.tokenInBody')('returns the issued token in the response body', async () => {
+    const response = await auth.login(credentials)
+
     expect(response.data).toEqual({ token: expect.stringMatching(/.+/) as string })
   })
 
@@ -20,8 +28,10 @@ describe('auth service @smoke', () => {
       password: 'wrong-password',
     })
 
-    expect(response.status).toBe(401)
-    expect(response.data).toEqual({ error: 'Invalid credentials' })
+    expect(response.status).toBe(expectedStatus('auth.rejected'))
+    if (supports('auth.describesOutcome')) {
+      expect(response.data).toEqual({ error: 'Invalid credentials' })
+    }
   })
 
   it('confirms an issued token as valid', async () => {
@@ -30,14 +40,18 @@ describe('auth service @smoke', () => {
     const response = await auth.validate(token)
 
     expect(response.status).toBe(200)
-    expect(response.data).toEqual({ valid: true })
+    if (supports('auth.describesOutcome')) {
+      expect(response.data).toEqual({ valid: true })
+    }
   })
 
   it('rejects a malformed token', async () => {
     const response = await auth.validate('malformed-token')
 
     expect(response.status).toBe(403)
-    expect(response.data).toEqual({ error: 'Invalid token' })
+    if (supports('auth.describesOutcome')) {
+      expect(response.data).toEqual({ error: 'Invalid token' })
+    }
   })
 
   it('accepts logout for an active token', async () => {
@@ -46,15 +60,20 @@ describe('auth service @smoke', () => {
     const response = await auth.logout(token)
 
     expect(response.status).toBe(200)
-    expect(response.data).toEqual({ success: true })
+    if (supports('auth.describesOutcome')) {
+      expect(response.data).toEqual({ success: true })
+    }
   })
 
-  it.fails('invalidates the token after logout (known RBP defect: token survives)', async () => {
-    const token = await adminToken()
-    await auth.logout(token)
+  itWhenSupported('defects.documented').fails(
+    'invalidates the token after logout (known RBP defect: token survives)',
+    async () => {
+      const token = await adminToken()
+      await auth.logout(token)
 
-    const response = await auth.validate(token)
+      const response = await auth.validate(token)
 
-    expect(response.status).toBe(403)
-  })
+      expect(response.status).toBe(403)
+    },
+  )
 })
