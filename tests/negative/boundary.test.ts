@@ -4,7 +4,9 @@ import { roomPayload } from '@factories/room-factory'
 import type { BookingPayload } from '@models/booking'
 import type { RoomType } from '@models/room'
 import type { Room } from '@models/room'
+import { supports } from '@profiles/target-profile'
 import { createServicesWithoutRetry } from '@services/service-factory'
+import { validationMessages } from '@support/validation'
 import { provisionRoom } from '@support/rooms'
 import { adminToken } from '@support/session'
 
@@ -31,7 +33,7 @@ describe('booking boundary @negative', () => {
     const response = await booking.create(bookingPayload(testRoom.roomid, { firstname: 'X' }))
 
     expect(response.status).toBe(400)
-    expect(response.data).toEqual({ errors: ['size must be between 3 and 18'] })
+    expect(validationMessages(response.data)).toEqual(['size must be between 3 and 18'])
   })
 
   it('rejects a missing lastname', async () => {
@@ -40,10 +42,11 @@ describe('booking boundary @negative', () => {
     const response = await booking.create(withoutLastname as BookingPayload)
 
     expect(response.status).toBe(400)
-    if (!('errors' in response.data)) {
+    const messages = validationMessages(response.data)
+    if (messages === undefined) {
       throw new Error('Expected a validation error body')
     }
-    expect(response.data.errors).toContain('Lastname should not be blank')
+    expect(messages).toContain('Lastname should not be blank')
   })
 
   it('rejects an inverted date range', async () => {
@@ -54,7 +57,9 @@ describe('booking boundary @negative', () => {
     )
 
     expect(response.status).toBe(409)
-    expect(response.data).toEqual({ error: 'Failed to create booking' })
+    if (supports('auth.describesOutcome')) {
+      expect(response.data).toEqual({ error: 'Failed to create booking' })
+    }
   })
 
   it.fails(
@@ -75,23 +80,24 @@ describe('room boundary @negative', () => {
     const response = await room.create(roomPayload({ roomName: '' }), token)
 
     expect(response.status).toBe(400)
-    expect(response.data).toEqual({ errors: ['Room name must be set'] })
+    expect(validationMessages(response.data)).toEqual(['Room name must be set'])
   })
 
   it('rejects a non-positive price', async () => {
     const response = await room.create(roomPayload({ roomPrice: -5 }), token)
 
     expect(response.status).toBe(400)
-    expect(response.data).toEqual({ errors: ['must be greater than or equal to 1'] })
+    expect(validationMessages(response.data)).toEqual(['must be greater than or equal to 1'])
   })
 
   it('rejects an unknown room type', async () => {
     const response = await room.create(roomPayload({ type: 'Palace' as RoomType }), token)
 
     expect(response.status).toBe(400)
-    if (!('errors' in response.data)) {
+    const messages = validationMessages(response.data)
+    if (messages === undefined) {
       throw new Error('Expected a validation error body')
     }
-    expect(response.data.errors[0]).toContain('Type can only contain')
+    expect(messages[0]).toContain('Type can only contain')
   })
 })

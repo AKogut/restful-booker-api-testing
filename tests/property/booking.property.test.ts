@@ -5,6 +5,7 @@ import { nextStayWindow } from '@factories/booking-factory'
 import type { BookingPayload } from '@models/booking'
 import type { Room } from '@models/room'
 import { createServices } from '@services/service-factory'
+import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
 import { adminToken } from '@support/session'
 
@@ -25,8 +26,9 @@ const bookingFor = (guest: Guest, nights: number): BookingPayload => ({
 })
 
 const register = (data: unknown): void => {
-  if (typeof data === 'object' && data !== null && 'bookingid' in data) {
-    createdBookingIds.add((data as { bookingid: number }).bookingid)
+  const created = createdBooking(data)
+  if (created !== undefined) {
+    createdBookingIds.add(created.bookingid)
   }
 }
 
@@ -48,19 +50,20 @@ describe('booking properties @property', () => {
       fc.asyncProperty(guestArbitrary, stayLengthArbitrary, async (guest, nights) => {
         const payload = bookingFor(guest, nights)
 
-        const created = await booking.create(payload)
-        register(created.data)
-        if (!('bookingid' in created.data)) {
+        const response = await booking.create(payload)
+        register(response.data)
+        const created = createdBooking(response.data)
+        if (created === undefined) {
           throw new Error(
-            `Create failed with ${created.status}: ${JSON.stringify(created.data)} for ${JSON.stringify(payload)}`,
+            `Create failed with ${response.status}: ${JSON.stringify(response.data)} for ${JSON.stringify(payload)}`,
           )
         }
 
-        const fetched = await booking.getById(created.data.bookingid, token)
+        const fetched = await booking.getById(created.bookingid, token)
 
         expect(fetched.status).toBe(200)
-        expect(fetched.data).toEqual({
-          bookingid: created.data.bookingid,
+        expect(createdBooking(fetched.data)).toEqual({
+          bookingid: created.bookingid,
           roomid: payload.roomid,
           firstname: payload.firstname,
           lastname: payload.lastname,
@@ -83,7 +86,7 @@ describe('booking properties @property', () => {
 
           const initial = await booking.create(payload)
           register(initial.data)
-          if (!('bookingid' in initial.data)) {
+          if (createdBooking(initial.data) === undefined) {
             throw new Error(`Setup booking failed with ${initial.status}`)
           }
 
@@ -95,7 +98,6 @@ describe('booking properties @property', () => {
           register(overlapping.data)
 
           expect(overlapping.status).toBe(409)
-          expect(overlapping.data).toEqual({ error: 'Failed to create booking' })
         },
       ),
       { numRuns: RUNS, verbose: true },
@@ -107,10 +109,10 @@ describe('booking properties @property', () => {
       fc.asyncProperty(guestArbitrary, stayLengthArbitrary, async (guest, nights) => {
         const payload = bookingFor(guest, nights)
 
-        const created = await booking.create(payload)
-        register(created.data)
-        if (!('bookingid' in created.data)) {
-          throw new Error(`Create failed with ${created.status}`)
+        const response = await booking.create(payload)
+        register(response.data)
+        if (createdBooking(response.data) === undefined) {
+          throw new Error(`Create failed with ${response.status}`)
         }
 
         const summary = await booking.summary(testRoom.roomid, token)

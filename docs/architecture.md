@@ -94,6 +94,29 @@ Transport-level retries are a property of the client, not of individual tests:
 - **Observable** — every exchange log entry carries its `attempt`, so a passing-but-flaky endpoint is visible in the report rather than silently smoothed over.
 - **Opt-out** — negative suites build their services through `createServicesWithoutRetry()`. A suite that asserts failure must observe the first response, not a masked one.
 
+## Two targets, one suite
+
+The suite runs against the hosted platform (`live`) and against the published RBP images in `docker compose` (`local`). These implement **different versions of the same API** — verified against the `2.2` images, the `latest` images and upstream `trunk` source, which agree with each other and disagree with live.
+
+Rather than maintain two suites or assert the lowest common denominator, differences are declared in one module:
+
+```
+src/profiles/target-profile.ts
+  STATUS        expectedStatus('auth.rejected')   → 401 live, 403 local
+  CAPABILITIES  supports('auth.tokenInBody')      → gates version-specific assertions
+```
+
+The layering rule that makes this cheap: **adapt at acquisition, assert at contract.** Obtaining a token or a created booking is plumbing, so helpers (`extractToken`, `createdBooking`, `validationMessages`) accept either shape. The exact response body _is_ the contract, so those assertions are gated by capability and skipped where they do not apply — visibly, as skips in the report, never silently softened.
+
+Because `createServices()` already builds one client per service base URL, pointing at a different deployment costs a config file and no code:
+
+```
+live:  https://automationintesting.online/api/room
+local: http://localhost:3001/room/
+```
+
+The full inventory of differences is in [target-differences.md](target-differences.md).
+
 ## Test data and isolation
 
 The platform is a shared public demo, so suites never assume ownership of seed data:

@@ -17,8 +17,11 @@ import {
 } from '@schemas/index'
 import { getConfig } from '@config/app-config'
 import { createServices } from '@services/service-factory'
+import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
 import { adminToken } from '@support/session'
+import { expectedStatus } from '@profiles/target-profile'
+import { itWhenSupported } from '../support/target'
 
 const { auth, room, booking, message, branding, report } = createServices()
 const { credentials } = getConfig()
@@ -31,11 +34,11 @@ const createdMessageIds = new Set<number>()
 beforeAll(async () => {
   token = await adminToken()
   testRoom = await provisionRoom(room, token)
-  const created = await booking.create(bookingPayload(testRoom.roomid))
-  if (!('bookingid' in created.data)) {
-    throw new Error(`Booking setup failed with status ${created.status}`)
+  const created = createdBooking((await booking.create(bookingPayload(testRoom.roomid))).data)
+  if (created === undefined) {
+    throw new Error('Booking setup failed')
   }
-  testBooking = created.data
+  testBooking = created
 })
 
 afterAll(async () => {
@@ -47,7 +50,7 @@ afterAll(async () => {
 })
 
 describe('response contracts @contract', () => {
-  it('auth login matches AuthToken', async () => {
+  itWhenSupported('auth.tokenInBody')('auth login matches AuthToken', async () => {
     const response = await auth.login(credentials)
     assertValid(authTokenSchema, response.data)
   })
@@ -69,7 +72,7 @@ describe('response contracts @contract', () => {
 
   it('message list and detail match their schemas', async () => {
     const created = await message.create(messagePayload())
-    expect(created.status).toBe(200)
+    expect(created.status).toBe(expectedStatus('resource.created'))
 
     const list = await message.list()
     const validated = assertValid(messageListSchema, list.data)

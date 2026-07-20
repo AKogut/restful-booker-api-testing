@@ -3,8 +3,11 @@ import { bookingPayload } from '@factories/booking-factory'
 import type { Booking } from '@models/booking'
 import type { Room } from '@models/room'
 import { createServices } from '@services/service-factory'
+import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
 import { adminToken } from '@support/session'
+import { expectedStatus } from '@profiles/target-profile'
+import { itWhenSupported } from '../support/target'
 
 const { branding, report, booking, room } = createServices()
 
@@ -16,11 +19,11 @@ beforeAll(async () => {
   token = await adminToken()
   testRoom = await provisionRoom(room, token)
   const payload = bookingPayload(testRoom.roomid)
-  const created = await booking.create(payload)
-  if (!('bookingid' in created.data)) {
-    throw new Error(`Booking setup failed with status ${created.status}`)
+  const created = createdBooking((await booking.create(payload)).data)
+  if (created === undefined) {
+    throw new Error('Booking setup failed')
   }
-  testBooking = created.data
+  testBooking = created
 })
 
 afterAll(async () => {
@@ -45,10 +48,10 @@ describe('branding service @smoke', () => {
 
     const response = await branding.update(current.data)
 
-    expect(response.status).toBe(401)
+    expect(response.status).toBe(expectedStatus('authz.missingToken.report'))
   })
 
-  it.fails(
+  itWhenSupported('defects.documented').fails(
     'accepts its own payload back on update (known RBP defect: relative logoUrl fails @URL)',
     async () => {
       const current = await branding.get()
@@ -64,7 +67,7 @@ describe('report service @smoke', () => {
   it('rejects the report without a token', async () => {
     const response = await report.get()
 
-    expect(response.status).toBe(401)
+    expect(response.status).toBe(expectedStatus('authz.missingToken.report'))
   })
 
   it('reflects a booking created via the booking service (cross-service)', async () => {

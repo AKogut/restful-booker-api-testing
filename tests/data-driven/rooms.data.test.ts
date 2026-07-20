@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { roomPayload } from '@factories/room-factory'
 import type { RoomPayload } from '@models/room'
+import { expectedStatus } from '@profiles/target-profile'
 import { createServices } from '@services/service-factory'
+import { validationMessages } from '@support/validation'
 import { adminToken } from '@support/session'
 import roomCases from '../data/room-cases.json'
 
@@ -35,15 +37,20 @@ describe('room creation dataset @data-driven', () => {
 
       const response = await room.create(payload, token)
 
-      expect(response.status).toBe(testCase.expected.status)
+      const expected =
+        testCase.expected.status === 200
+          ? expectedStatus('resource.created')
+          : testCase.expected.status
+      expect(response.status).toBe(expected)
 
       if (testCase.expected.errors !== undefined) {
-        if (!('errors' in response.data)) {
+        const messages = validationMessages(response.data)
+        if (messages === undefined) {
           throw new Error(
             `Expected a validation error body, received ${JSON.stringify(response.data)}`,
           )
         }
-        expect(response.data.errors).toEqual(testCase.expected.errors)
+        expect(messages).toEqual(testCase.expected.errors)
         return
       }
 
