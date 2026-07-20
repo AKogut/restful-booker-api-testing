@@ -7,7 +7,7 @@ import type { Room } from '@models/room'
 import { createServices } from '@services/service-factory'
 import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
-import { adminToken } from '@support/session'
+import { sharedToken } from '../support/session'
 
 const { booking, room } = createServices()
 
@@ -33,7 +33,7 @@ const register = (data: unknown): void => {
 }
 
 beforeAll(async () => {
-  token = await adminToken()
+  token = sharedToken()
   testRoom = await provisionRoom(room, token)
 })
 

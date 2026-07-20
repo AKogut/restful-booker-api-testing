@@ -4,8 +4,8 @@ import { roomFieldsArbitrary } from '@factories/arbitraries'
 import { nextRoomName } from '@factories/room-factory'
 import type { RoomPayload } from '@models/room'
 import { createServices } from '@services/service-factory'
-import { adminToken } from '@support/session'
 import { expectedStatus } from '@profiles/target-profile'
+import { sharedToken } from '../support/session'
 
 const { room } = createServices()
 
@@ -14,8 +14,8 @@ const RUNS = 6
 let token: string
 const createdRoomIds = new Set<number>()
 
-beforeAll(async () => {
-  token = await adminToken()
+beforeAll(() => {
+  token = sharedToken()
 })
 
 afterAll(async () => {

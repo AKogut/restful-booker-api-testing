@@ -2,9 +2,9 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { messagePayload } from '@factories/message-factory'
 import type { MessagePayload } from '@models/message'
 import { createServices } from '@services/service-factory'
-import { adminToken } from '@support/session'
 import { expectedStatus, supports } from '@profiles/target-profile'
 import { itWhenSupported } from '../support/target'
+import { sharedToken } from '../support/session'
 
 const { message } = createServices()
 
@@ -27,8 +27,8 @@ const createMessage = async (payload: MessagePayload): Promise<number> => {
   return created.id
 }
 
-beforeAll(async () => {
-  token = await adminToken()
+beforeAll(() => {
+  token = sharedToken()
 })
 
 afterAll(async () => {

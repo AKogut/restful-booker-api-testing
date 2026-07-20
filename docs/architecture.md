@@ -117,6 +117,32 @@ local: http://localhost:3001/room/
 
 The full inventory of differences is in [target-differences.md](target-differences.md).
 
+## Run lifecycle
+
+`tests/global-setup.ts` owns everything that is true once per run rather than once per suite:
+
+```
+readiness gate  →  wait for all six services (see above)
+token warm-up   →  one admin login, published via project.provide('adminToken')
+run registry    →  a temp JSONL file whose path is exported as RUN_REGISTRY
+                   ↓  (suites run)
+teardown        →  sweep anything the suites left behind, then delete the file
+```
+
+Suites take the token synchronously with `sharedToken()` instead of logging in themselves, which took a full run from **21 logins to 12** — the remaining twelve belong to the auth suite and the login-negative matrix, where logging in _is_ the test subject.
+
+### The registry is a crash net, not the cleanup path
+
+Every suite still deletes what it created in `afterAll`; that is the fast path and it stays. The registry exists for the case `afterAll` never runs — a failed `beforeAll`, a timeout, a killed worker. `track()` appends to a file rather than an in-memory set precisely because the worker that created the resource may be the one that died, and the file survives it.
+
+Teardown is silent when the suites cleaned up after themselves, and reports only what it actually removed:
+
+```
+Swept 1 resource(s) left behind by an incomplete suite
+```
+
+Verified by deliberately running a suite that provisions a room and never cleans up: the run failed and the sweep removed the room. Untested cleanup infrastructure is worth very little, since it only ever runs on the paths nobody exercises.
+
 ## Test data and isolation
 
 The platform is a shared public demo, so suites never assume ownership of seed data:

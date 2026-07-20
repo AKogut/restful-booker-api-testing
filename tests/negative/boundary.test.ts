@@ -8,7 +8,7 @@ import { supports } from '@profiles/target-profile'
 import { createServicesWithoutRetry } from '@services/service-factory'
 import { validationMessages } from '@support/validation'
 import { provisionRoom } from '@support/rooms'
-import { adminToken } from '@support/session'
+import { sharedToken } from '../support/session'
 
 const { room, booking } = createServicesWithoutRetry()
 
@@ -17,7 +17,7 @@ let testRoom: Room
 const createdBookingIds = new Set<number>()
 
 beforeAll(async () => {
-  token = await adminToken()
+  token = sharedToken()
   testRoom = await provisionRoom(room, token)
 })
 

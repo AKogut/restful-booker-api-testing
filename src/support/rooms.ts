@@ -1,5 +1,6 @@
 import type { Room } from '@models/room'
 import { expectedStatus } from '@profiles/target-profile'
+import { track } from './run-registry'
 import type { RoomService } from '@services/room-service'
 import { roomPayload } from '@factories/room-factory'
 
@@ -14,5 +15,6 @@ export const provisionRoom = async (room: RoomService, token: string): Promise<R
   if (created === undefined) {
     throw new Error(`Provisioned room ${payload.roomName} not found in the listing`)
   }
+  track('room', created.roomid)
   return created
 }
