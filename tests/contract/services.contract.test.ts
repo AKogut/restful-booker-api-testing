@@ -90,6 +90,14 @@ describe('response contracts @contract', () => {
     const response = await report.getByRoom(testRoom.roomid, token)
     assertValid(reportSchema, response.data)
   })
+
+  it('the authenticated global report matches its schema', async () => {
+    const response = await report.get(token)
+
+    expect(response.status).toBe(200)
+    const validated = assertValid(reportSchema, response.data)
+    expect(Array.isArray(validated.report)).toBe(true)
+  })
 })
 
 describe('drift detection @contract', () => {

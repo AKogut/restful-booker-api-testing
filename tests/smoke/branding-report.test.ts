@@ -47,6 +47,17 @@ describe('branding service @smoke', () => {
 
     expect(response.status).toBe(401)
   })
+
+  it.fails(
+    'accepts its own payload back on update (known RBP defect: relative logoUrl fails @URL)',
+    async () => {
+      const current = await branding.get()
+
+      const response = await branding.update(current.data, token)
+
+      expect(response.status).toBe(202)
+    },
+  )
 })
 
 describe('report service @smoke', () => {
