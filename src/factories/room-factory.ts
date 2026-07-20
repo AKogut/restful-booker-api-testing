@@ -4,8 +4,10 @@ import type { RoomPayload, RoomType } from '@models/room'
 const ROOM_TYPES: RoomType[] = ['Single', 'Twin', 'Double', 'Family', 'Suite']
 const ROOM_FEATURES = ['TV', 'WiFi', 'Safe', 'Radio', 'Views']
 
+export const nextRoomName = (): string => faker.string.numeric(8)
+
 export const roomPayload = (overrides: Partial<RoomPayload> = {}): RoomPayload => ({
-  roomName: faker.string.numeric(8),
+  roomName: nextRoomName(),
   type: faker.helpers.arrayElement(ROOM_TYPES),
   accessible: faker.datatype.boolean(),
   image: '/images/room2.jpg',

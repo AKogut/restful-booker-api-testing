@@ -13,6 +13,8 @@ on:
           - smoke
           - contract
           - negative
+          - data-driven
+          - property
           - live
 
 jobs:
@@ -35,6 +37,8 @@ jobs:
             smoke) npm run test:smoke ;;
             contract) npm run test:contract ;;
             negative) npm run test:negative ;;
+            data-driven) npm run test:data-driven ;;
+            property) npm run test:property ;;
             live) npm run test:live ;;
             *) echo "Unknown suite: ${{ inputs.suite }}" && exit 1 ;;
           esac

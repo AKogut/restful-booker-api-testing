@@ -25,14 +25,16 @@ Verify the Restful Booker Platform API — six independent Spring Boot services 
 
 ## Suite taxonomy
 
-| Suite      | Network | Purpose                                                                                                                 | Command                 |
-| ---------- | ------- | ----------------------------------------------------------------------------------------------------------------------- | ----------------------- |
-| `unit`     | none    | Framework internals: config parsing, redaction, request building, error normalization, health mapping, schema assertion | `npm run test:unit`     |
-| `smoke`    | live    | Behavioural happy paths and key negatives per service                                                                   | `npm run test:smoke`    |
-| `contract` | live    | Response schemas, drift detection, cross-service consistency                                                            | `npm run test:contract` |
-| `negative` | live    | Credential rejection, authorization matrix, boundary and malformed input                                                | `npm run test:negative` |
+| Suite         | Network | Purpose                                                                                                                 | Command                    |
+| ------------- | ------- | ----------------------------------------------------------------------------------------------------------------------- | -------------------------- |
+| `unit`        | none    | Framework internals: config parsing, redaction, request building, error normalization, health mapping, schema assertion | `npm run test:unit`        |
+| `smoke`       | live    | Behavioural happy paths and key negatives per service                                                                   | `npm run test:smoke`       |
+| `contract`    | live    | Response schemas, drift detection, cross-service consistency                                                            | `npm run test:contract`    |
+| `negative`    | live    | Credential rejection, authorization matrix, boundary and malformed input                                                | `npm run test:negative`    |
+| `data-driven` | live    | Room and booking validation matrices driven by external JSON datasets                                                   | `npm run test:data-driven` |
+| `property`    | live    | fast-check properties: payload round-trip, double-booking rejection, summary reflection                                 | `npm run test:property`    |
 
-`npm run test:live` runs the three live suites; `npm test` runs everything; `npm run coverage` adds enforced thresholds.
+`npm run test:live` runs all five live suites; `npm test` runs everything; `npm run coverage` adds enforced thresholds.
 
 ## Entry and exit criteria
 

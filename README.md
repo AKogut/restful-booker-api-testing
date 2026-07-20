@@ -59,6 +59,9 @@ tests/
   smoke/      Behavioural happy paths per service
   contract/   Schema, drift & cross-service consistency
   negative/   Auth, authorization, boundary, malformed input
+  data-driven/ JSON-dataset driven room & booking matrices
+  property/   fast-check property-based suites
+  data/       External test-case datasets
 docs/         Architecture, test strategy, bug reports
 ```
 
