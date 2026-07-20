@@ -4,8 +4,8 @@ import type { RoomPayload } from '@models/room'
 import { expectedStatus } from '@profiles/target-profile'
 import { createServices } from '@services/service-factory'
 import { validationMessages } from '@support/validation'
-import { adminToken } from '@support/session'
 import roomCases from '../data/room-cases.json'
+import { sharedToken } from '../support/session'
 
 interface RoomCase {
   name: string
@@ -19,8 +19,8 @@ const cases = roomCases as RoomCase[]
 let token: string
 const createdRoomIds = new Set<number>()
 
-beforeAll(async () => {
-  token = await adminToken()
+beforeAll(() => {
+  token = sharedToken()
 })
 
 afterAll(async () => {

@@ -5,9 +5,9 @@ import type { Room } from '@models/room'
 import { createServices } from '@services/service-factory'
 import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
-import { adminToken } from '@support/session'
 import { expectedStatus } from '@profiles/target-profile'
 import { itWhenSupported } from '../support/target'
+import { sharedToken } from '../support/session'
 
 const { branding, report, booking, room } = createServices()
 
@@ -16,7 +16,7 @@ let testRoom: Room
 let testBooking: Booking
 
 beforeAll(async () => {
-  token = await adminToken()
+  token = sharedToken()
   testRoom = await provisionRoom(room, token)
   const payload = bookingPayload(testRoom.roomid)
   const created = createdBooking((await booking.create(payload)).data)

@@ -3,8 +3,8 @@ import type { Room, RoomPayload } from '@models/room'
 import { expectedStatus, supports } from '@profiles/target-profile'
 import { createServices } from '@services/service-factory'
 import { roomPayload } from '@factories/room-factory'
-import { adminToken } from '@support/session'
 import { itWhenSupported } from '../support/target'
+import { sharedToken } from '../support/session'
 
 const { room } = createServices()
 
@@ -27,8 +27,8 @@ const createRoom = async (payload: RoomPayload): Promise<Room> => {
   return created
 }
 
-beforeAll(async () => {
-  token = await adminToken()
+beforeAll(() => {
+  token = sharedToken()
 })
 
 afterAll(async () => {

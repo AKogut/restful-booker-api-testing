@@ -6,9 +6,9 @@ import { createServices } from '@services/service-factory'
 import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
 import { validationMessages } from '@support/validation'
-import { adminToken } from '@support/session'
 import bookingCases from '../data/booking-cases.json'
 import { supports } from '@profiles/target-profile'
+import { sharedToken } from '../support/session'
 
 interface BookingCase {
   name: string
@@ -41,7 +41,7 @@ const buildPayload = (testCase: BookingCase): BookingPayload => {
 }
 
 beforeAll(async () => {
-  token = await adminToken()
+  token = sharedToken()
   testRoom = await provisionRoom(room, token)
 })
 

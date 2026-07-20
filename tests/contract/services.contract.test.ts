@@ -19,9 +19,9 @@ import { getConfig } from '@config/app-config'
 import { createServices } from '@services/service-factory'
 import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
-import { adminToken } from '@support/session'
 import { expectedStatus } from '@profiles/target-profile'
 import { itWhenSupported } from '../support/target'
+import { sharedToken } from '../support/session'
 
 const { auth, room, booking, message, branding, report } = createServices()
 const { credentials } = getConfig()
@@ -32,7 +32,7 @@ let testBooking: Booking
 const createdMessageIds = new Set<number>()
 
 beforeAll(async () => {
-  token = await adminToken()
+  token = sharedToken()
   testRoom = await provisionRoom(room, token)
   const created = createdBooking((await booking.create(bookingPayload(testRoom.roomid))).data)
   if (created === undefined) {

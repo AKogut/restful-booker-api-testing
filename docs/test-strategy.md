@@ -57,10 +57,10 @@ An `it.fails` test is only as good as its failure reason. A guard that passes be
 
 The target is a public demo mutated by other users at any time. The suite therefore:
 
-- provisions its own room per run rather than relying on seed data,
+- provisions its own room **per suite** rather than sharing a seeded one — a shared room would put every suite's bookings in one date space, which is the collision this design exists to avoid,
 - generates non-overlapping booking windows by construction,
 - asserts per-entity state instead of global counters,
-- cleans up every created room, booking and message in teardown,
+- cleans up every created room, booking and message in `afterAll`, with a run-level registry sweeping anything a crashed suite left behind,
 - never performs an irreversible mutation of shared state (for example, branding updates are only exercised where the request is rejected).
 
 ## Separating infrastructure noise from defects

@@ -5,9 +5,9 @@ import { createServices } from '@services/service-factory'
 import { bookingPayload } from '@factories/booking-factory'
 import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
-import { adminToken } from '@support/session'
 import { expectedStatus, supports } from '@profiles/target-profile'
 import { itWhenSupported } from '../support/target'
+import { sharedToken } from '../support/session'
 
 const { booking, room } = createServices()
 
@@ -26,7 +26,7 @@ const createBooking = async (payload: BookingPayload): Promise<Booking> => {
 }
 
 beforeAll(async () => {
-  token = await adminToken()
+  token = sharedToken()
   testRoom = await provisionRoom(room, token)
 })
 
