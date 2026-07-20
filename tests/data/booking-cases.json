@@ -1,0 +1,42 @@
+[
+  {
+    "name": "shortest accepted firstname",
+    "overrides": { "firstname": "Abc" },
+    "expected": { "status": 201 }
+  },
+  {
+    "name": "longest accepted firstname",
+    "overrides": { "firstname": "Abcdefghijklmnopqr" },
+    "expected": { "status": 201 }
+  },
+  {
+    "name": "deposit not paid",
+    "overrides": { "depositpaid": false },
+    "expected": { "status": 201 }
+  },
+  {
+    "name": "contact details omitted",
+    "omit": ["email", "phone"],
+    "expected": { "status": 201 }
+  },
+  {
+    "name": "firstname below minimum length",
+    "overrides": { "firstname": "Ab" },
+    "expected": { "status": 400, "errors": ["size must be between 3 and 18"] }
+  },
+  {
+    "name": "firstname above maximum length",
+    "overrides": { "firstname": "Abcdefghijklmnopqrs" },
+    "expected": { "status": 400, "errors": ["size must be between 3 and 18"] }
+  },
+  {
+    "name": "lastname omitted",
+    "omit": ["lastname"],
+    "expected": { "status": 400, "errors": ["Lastname should not be blank"] }
+  },
+  {
+    "name": "inverted date range",
+    "invertDates": true,
+    "expected": { "status": 409, "error": "Failed to create booking" }
+  }
+]

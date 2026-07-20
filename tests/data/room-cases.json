@@ -1,0 +1,50 @@
+[
+  {
+    "name": "minimum accepted price",
+    "overrides": { "roomPrice": 1 },
+    "expected": { "status": 200 }
+  },
+  {
+    "name": "maximum accepted price",
+    "overrides": { "roomPrice": 999 },
+    "expected": { "status": 200 }
+  },
+  {
+    "name": "price above maximum",
+    "overrides": { "roomPrice": 1000 },
+    "expected": { "status": 400, "errors": ["must be less than or equal to 999"] }
+  },
+  {
+    "name": "no features",
+    "overrides": { "features": [] },
+    "expected": { "status": 200 }
+  },
+  {
+    "name": "not accessible",
+    "overrides": { "accessible": false },
+    "expected": { "status": 200 }
+  },
+  {
+    "name": "empty room name",
+    "overrides": { "roomName": "" },
+    "expected": { "status": 400, "errors": ["Room name must be set"] }
+  },
+  {
+    "name": "zero price",
+    "overrides": { "roomPrice": 0 },
+    "expected": { "status": 400, "errors": ["must be greater than or equal to 1"] }
+  },
+  {
+    "name": "negative price",
+    "overrides": { "roomPrice": -1 },
+    "expected": { "status": 400, "errors": ["must be greater than or equal to 1"] }
+  },
+  {
+    "name": "unknown room type",
+    "overrides": { "type": "Palace" },
+    "expected": {
+      "status": 400,
+      "errors": ["Type can only contain the room options Single, Double, Twin, Family or Suite"]
+    }
+  }
+]
