@@ -49,7 +49,9 @@ Every confirmed platform defect gets:
 1. a report in [`docs/bug-reports/`](bug-reports/) with repro steps, evidence, impact and severity,
 2. an `it.fails` test that encodes the **expected correct behaviour**.
 
-This keeps defects visible instead of silently accommodated, and makes a platform fix surface immediately as a failing test rather than going unnoticed. Report-to-test parity is intentional: six reports, six guarded tests.
+This keeps defects visible instead of silently accommodated, and makes a platform fix surface immediately as a failing test rather than going unnoticed. Report-to-test parity is intentional: nine reports, nine guarded tests.
+
+An `it.fails` test is only as good as its failure reason. A guard that passes because the request timed out proves nothing about the defect it claims to cover, so any `it.fails` whose runtime approaches the client timeout is treated as suspect and re-examined — that is how [BUG-009](bug-reports/BUG-009-report-stalls-on-invalid-token.md) was found.
 
 ## Determinism on a shared environment
 
