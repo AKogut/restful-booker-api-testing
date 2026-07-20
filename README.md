@@ -55,10 +55,10 @@ src/
   factories/  faker-based test data builders (rooms, bookings)
   support/    session and provisioning helpers for suites
 tests/
-  smoke/      Fast happy-path checks
-  regression/ Full functional coverage
-  negative/   Auth, authorization, boundary, malformed input
+  unit/       Hermetic framework tests (no network)
+  smoke/      Behavioural happy paths per service
   contract/   Schema, drift & cross-service consistency
+  negative/   Auth, authorization, boundary, malformed input
 docs/         Architecture, test strategy, bug reports
 ```
 
@@ -84,15 +84,17 @@ npm test
 
 ## Scripts
 
-| Script                    | Purpose                              |
-| ------------------------- | ------------------------------------ |
-| `npm test`                | Run the full suite                   |
-| `npm run test:smoke`      | Fast smoke suite                     |
-| `npm run test:regression` | Full regression                      |
-| `npm run test:contract`   | Schema, drift & cross-service checks |
-| `npm run typecheck`       | TypeScript type checking             |
-| `npm run lint`            | ESLint                               |
-| `npm run format`          | Prettier                             |
+| Script                  | Purpose                                   |
+| ----------------------- | ----------------------------------------- |
+| `npm test`              | Run the full suite                        |
+| `npm run test:smoke`    | Fast smoke suite                          |
+| `npm run test:unit`     | Hermetic unit tests                       |
+| `npm run test:live`     | All live suites (smoke+contract+negative) |
+| `npm run coverage`      | Full suite with enforced thresholds       |
+| `npm run test:contract` | Schema, drift & cross-service checks      |
+| `npm run typecheck`     | TypeScript type checking                  |
+| `npm run lint`          | ESLint                                    |
+| `npm run format`        | Prettier                                  |
 
 ## Contracts
 

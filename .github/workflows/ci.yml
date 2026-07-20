@@ -38,7 +38,7 @@ jobs:
       - run: npm run test:unit
 
   live-tests:
-    name: Live tests (API)
+    name: Tests & coverage
     runs-on: ubuntu-latest
     needs: [static-checks, unit-tests]
     steps:
@@ -49,4 +49,4 @@ jobs:
           cache: npm
       - run: npm ci
       - run: cp .env.example .env
-      - run: npm run test:live
+      - run: npm run coverage
