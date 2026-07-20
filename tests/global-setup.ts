@@ -44,6 +44,12 @@ export default async function globalSetup(project: TestProject): Promise<() => P
   await waitForPlatformReady(getConfig())
 
   const token = await adminToken()
+  const validation = await createServices().auth.validate(token)
+  if (validation.status !== 200) {
+    throw new Error(
+      `The admin token issued at start-up was rejected with ${validation.status} — every suite would fail against it`,
+    )
+  }
   project.provide('adminToken', token)
 
   const path = join(mkdtempSync(join(tmpdir(), 'rbp-run-')), 'registry.jsonl')
