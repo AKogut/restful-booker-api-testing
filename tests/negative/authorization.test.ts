@@ -3,9 +3,9 @@ import { roomPayload } from '@factories/room-factory'
 import type { AuthCredentials } from '@models/auth'
 import type { Branding } from '@models/branding'
 import { getConfig } from '@config/app-config'
-import { createServices } from '@services/service-factory'
+import { createServicesWithoutRetry } from '@services/service-factory'
 
-const { auth, room, booking, message, branding, report } = createServices()
+const { auth, room, booking, message, branding, report } = createServicesWithoutRetry()
 const { credentials } = getConfig()
 
 const ANY_ID = 1

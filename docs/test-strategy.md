@@ -38,7 +38,7 @@ Verify the Restful Booker Platform API — six independent Spring Boot services 
 
 ## Entry and exit criteria
 
-**Entry** — all six services report `UP` on `/actuator/health`. The `globalSetup` gate enforces this and aborts with the failing service named.
+**Entry** — all six services report `UP` on `/actuator/health`. The `globalSetup` gate polls until they do, up to `READINESS_TIMEOUT_MS`, then aborts with the failing service and the attempt count named.
 
 **Exit** — static checks, unit tests and the full live suite with coverage thresholds all pass. Known platform defects are represented by `it.fails` tests, so the suite is green while a defect exists and turns red the moment it is fixed.
 
@@ -60,6 +60,17 @@ The target is a public demo mutated by other users at any time. The suite theref
 - asserts per-entity state instead of global counters,
 - cleans up every created room, booking and message in teardown,
 - never performs an irreversible mutation of shared state (for example, branding updates are only exercised where the request is rejected).
+
+## Separating infrastructure noise from defects
+
+A shared demo produces two kinds of red that must not be conflated:
+
+| Signal                                               | Interpretation | Handling                                           |
+| ---------------------------------------------------- | -------------- | -------------------------------------------------- |
+| Cold start, `502/503/504`, `429`, connection refused | Infrastructure | Readiness gate + bounded retry with backoff        |
+| `4xx` contract violation, `500`, wrong body          | Product defect | Fails the suite; documented in `docs/bug-reports/` |
+
+Retries are deliberately narrow: idempotent methods only, transient statuses only, capped attempts, and disabled outright in the negative suites via `createServicesWithoutRetry()`. Every attempt is recorded in the exchange log, so a call that only passes on retry is visible rather than hidden — a retry policy that silently masks degradation would be worse than no retry at all.
 
 ## CI strategy
 

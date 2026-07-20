@@ -4,11 +4,11 @@ import { roomPayload } from '@factories/room-factory'
 import type { BookingPayload } from '@models/booking'
 import type { RoomType } from '@models/room'
 import type { Room } from '@models/room'
-import { createServices } from '@services/service-factory'
+import { createServicesWithoutRetry } from '@services/service-factory'
 import { provisionRoom } from '@support/rooms'
 import { adminToken } from '@support/session'
 
-const { room, booking } = createServices()
+const { room, booking } = createServicesWithoutRetry()
 
 let token: string
 let testRoom: Room
