@@ -33,6 +33,7 @@ export interface ExchangeLogEntry {
   url: string
   status?: number
   durationMs?: number
+  attempt?: number
   requestHeaders?: unknown
   requestBody?: unknown
   responseBody?: unknown

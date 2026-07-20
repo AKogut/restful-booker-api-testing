@@ -1,4 +1,5 @@
 import { HttpClient } from '@client/http-client'
+import { sleep } from '@client/retry-policy'
 import { getConfig, type AppConfig, type ServiceUrls } from '@config/app-config'
 import type { HealthReport, HealthStatus } from '@models/health'
 
@@ -6,6 +7,15 @@ export interface ServiceHealth {
   service: string
   status: HealthStatus | 'UNREACHABLE'
   healthy: boolean
+}
+
+export type ReadinessReporter = (attempt: number, unhealthy: ServiceHealth[]) => void
+
+const summarize = (results: ServiceHealth[]): string =>
+  results.map((result) => `${result.service}=${result.status}`).join(', ')
+
+export const consoleReadinessReporter: ReadinessReporter = (attempt, unhealthy) => {
+  console.info(`Waiting for the platform — attempt ${attempt}, ${summarize(unhealthy)}`)
 }
 
 const probe = async (baseUrl: string, timeoutMs: number): Promise<ServiceHealth['status']> => {
@@ -33,10 +43,31 @@ export const checkHealth = async (config: AppConfig = getConfig()): Promise<Serv
 }
 
 export const assertPlatformHealthy = async (config: AppConfig = getConfig()): Promise<void> => {
-  const results = await checkHealth(config)
-  const unhealthy = results.filter((result) => !result.healthy)
+  const unhealthy = (await checkHealth(config)).filter((result) => !result.healthy)
   if (unhealthy.length > 0) {
-    const summary = unhealthy.map((result) => `${result.service}=${result.status}`).join(', ')
-    throw new Error(`Restful Booker Platform is not ready — ${summary}`)
+    throw new Error(`Restful Booker Platform is not ready — ${summarize(unhealthy)}`)
+  }
+}
+
+export const waitForPlatformReady = async (
+  config: AppConfig = getConfig(),
+  report: ReadinessReporter = consoleReadinessReporter,
+): Promise<void> => {
+  const deadline = Date.now() + config.readiness.timeoutMs
+
+  for (let attempt = 1; ; attempt += 1) {
+    const unhealthy = (await checkHealth(config)).filter((result) => !result.healthy)
+    if (unhealthy.length === 0) {
+      return
+    }
+
+    if (Date.now() + config.readiness.intervalMs > deadline) {
+      throw new Error(
+        `Restful Booker Platform is not ready after ${attempt} attempts within ${config.readiness.timeoutMs} ms — ${summarize(unhealthy)}`,
+      )
+    }
+
+    report(attempt, unhealthy)
+    await sleep(config.readiness.intervalMs)
   }
 }

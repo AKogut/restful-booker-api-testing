@@ -28,7 +28,36 @@ describe('buildConfig', () => {
         report: 'https://rbp.test/api/report',
       },
       credentials: { username: 'admin', password: 'password' },
+      retry: { maxAttempts: 3, baseDelayMs: 300, maxDelayMs: 3_000 },
+      readiness: { timeoutMs: 90_000, intervalMs: 3_000 },
     })
+  })
+
+  it('overrides the retry policy from the environment', () => {
+    const config = buildConfig({
+      ...validEnv,
+      RETRY_MAX_ATTEMPTS: '5',
+      RETRY_BASE_DELAY_MS: '50',
+      RETRY_MAX_DELAY_MS: '500',
+    })
+
+    expect(config.retry).toEqual({ maxAttempts: 5, baseDelayMs: 50, maxDelayMs: 500 })
+  })
+
+  it('overrides the readiness window from the environment', () => {
+    const config = buildConfig({
+      ...validEnv,
+      READINESS_TIMEOUT_MS: '10000',
+      READINESS_INTERVAL_MS: '500',
+    })
+
+    expect(config.readiness).toEqual({ timeoutMs: 10_000, intervalMs: 500 })
+  })
+
+  it('rejects a retry policy that never attempts a call', () => {
+    expect(() => buildConfig({ ...validEnv, RETRY_MAX_ATTEMPTS: '0' })).toThrowError(
+      /RETRY_MAX_ATTEMPTS/,
+    )
   })
 
   it('coerces TIMEOUT_MS into a number', () => {

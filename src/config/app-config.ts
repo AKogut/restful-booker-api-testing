@@ -1,4 +1,5 @@
 import { config as loadDotenv } from 'dotenv'
+import type { RetryPolicy } from '@client/retry-policy'
 import { envSchema } from './env-schema'
 
 export type TestMode = 'live' | 'local'
@@ -17,11 +18,18 @@ export interface Credentials {
   readonly password: string
 }
 
+export interface Readiness {
+  readonly timeoutMs: number
+  readonly intervalMs: number
+}
+
 export interface AppConfig {
   readonly mode: TestMode
   readonly timeoutMs: number
   readonly services: ServiceUrls
   readonly credentials: Credentials
+  readonly retry: RetryPolicy
+  readonly readiness: Readiness
 }
 
 export const buildConfig = (env: NodeJS.ProcessEnv = process.env): AppConfig => {
@@ -47,6 +55,15 @@ export const buildConfig = (env: NodeJS.ProcessEnv = process.env): AppConfig => 
     credentials: {
       username: data.ADMIN_USER,
       password: data.ADMIN_PASSWORD,
+    },
+    retry: {
+      maxAttempts: data.RETRY_MAX_ATTEMPTS,
+      baseDelayMs: data.RETRY_BASE_DELAY_MS,
+      maxDelayMs: data.RETRY_MAX_DELAY_MS,
+    },
+    readiness: {
+      timeoutMs: data.READINESS_TIMEOUT_MS,
+      intervalMs: data.READINESS_INTERVAL_MS,
     },
   }
 }

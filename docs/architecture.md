@@ -74,7 +74,25 @@ Schemas are `.strict()`, so an unexpected field is a failure — that is what ma
 
 ## Environment readiness
 
-`assertPlatformHealthy()` probes `/actuator/health` on all six services in parallel and fails fast with a precise message (`report=DOWN, message=UNREACHABLE`). It runs as a Vitest `globalSetup` gate whenever `HEALTHCHECK=1`, so live suites stop once with a clear cause instead of cascading into timeouts. Unit tests run without it and stay hermetic.
+`checkHealth()` probes `/actuator/health` on all six services in parallel and reports each as `UP`, `DOWN` or `UNREACHABLE`.
+
+`waitForPlatformReady()` runs as a Vitest `globalSetup` gate whenever `HEALTHCHECK=1`. It polls that probe every `READINESS_INTERVAL_MS` until every service is `UP` or `READINESS_TIMEOUT_MS` elapses, printing the unhealthy set on each poll. The public demo cold-starts, so a single probe would fail an otherwise healthy pipeline; a bounded wait absorbs the cold start while still failing fast — and with a precise cause — when the platform is genuinely down:
+
+```
+Restful Booker Platform is not ready after 30 attempts within 90000 ms — auth=UNREACHABLE
+```
+
+Unit tests skip the gate entirely and stay hermetic.
+
+## Retries
+
+Transport-level retries are a property of the client, not of individual tests:
+
+- **Idempotent methods only** — `GET`, `HEAD`, `OPTIONS`, `PUT`, `DELETE`. A retried `POST` could create a duplicate booking, so it never retries.
+- **Transient signals only** — `408`, `425`, `429`, `502`, `503`, `504`, plus timeouts and connection failures. `500` is excluded on purpose: on this platform it is a genuine application defect worth failing on, not infrastructure noise.
+- **Exponential backoff with jitter** — `baseDelayMs · 2^(attempt-1)`, capped at `maxDelayMs`, randomized across the upper half so parallel suites do not resynchronize.
+- **Observable** — every exchange log entry carries its `attempt`, so a passing-but-flaky endpoint is visible in the report rather than silently smoothed over.
+- **Opt-out** — negative suites build their services through `createServicesWithoutRetry()`. A suite that asserts failure must observe the first response, not a masked one.
 
 ## Test data and isolation
 

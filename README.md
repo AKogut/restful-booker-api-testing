@@ -103,6 +103,25 @@ npm test
 
 Zod schemas in `src/schemas/` are the single source of truth for every service response. `npm run schema:export` renders them to language-agnostic JSON Schema files under `schemas/`. The `@contract` suite validates live responses against these schemas, detects drift (unexpected fields, malformed dates) via strict parsing, and asserts cross-service consistency (a booking surfaces in the room report).
 
+## Resilience
+
+The platform is a shared public demo that cold-starts, so the framework treats transient failure as an expected condition rather than a test result:
+
+- **Readiness gate** — `globalSetup` polls `/actuator/health` across all six services until they are `UP` or `READINESS_TIMEOUT_MS` elapses, so a cold start no longer reds an otherwise healthy pipeline.
+- **Retry with backoff** — idempotent requests retry on `408/425/429/502/503/504` and transport failures, with exponential backoff and jitter. `POST` never retries, and `500` is treated as a real defect.
+- **Observable** — every exchange log entry carries its `attempt`, so retried calls stay visible in the report.
+- **Opt-out** — negative suites use `createServicesWithoutRetry()` so a failure assertion always observes the first response.
+
+| Variable                | Default | Purpose                             |
+| ----------------------- | ------- | ----------------------------------- |
+| `RETRY_MAX_ATTEMPTS`    | `3`     | Attempts per idempotent request     |
+| `RETRY_BASE_DELAY_MS`   | `300`   | First backoff delay                 |
+| `RETRY_MAX_DELAY_MS`    | `3000`  | Backoff ceiling                     |
+| `READINESS_TIMEOUT_MS`  | `90000` | Total wait for the platform to boot |
+| `READINESS_INTERVAL_MS` | `3000`  | Interval between health polls       |
+
+Set `RETRY_MAX_ATTEMPTS=1` and `READINESS_TIMEOUT_MS=0` to reproduce the pre-retry, fail-fast behaviour.
+
 ## Test Modes
 
 - **live** — runs against the hosted platform at `automationintesting.online`

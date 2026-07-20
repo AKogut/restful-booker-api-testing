@@ -1,4 +1,5 @@
 import { HttpClient } from '@client/http-client'
+import { NO_RETRY, type RetryPolicy } from '@client/retry-policy'
 import { getConfig, type AppConfig } from '@config/app-config'
 import { AuthService } from './auth-service'
 import { BookingService } from './booking-service'
@@ -16,9 +17,12 @@ export interface Services {
   readonly report: ReportService
 }
 
-export const createServices = (config: AppConfig = getConfig()): Services => {
+export const createServices = (
+  config: AppConfig = getConfig(),
+  retry: RetryPolicy = config.retry,
+): Services => {
   const clientFor = (baseUrl: string): HttpClient =>
-    new HttpClient({ baseUrl, timeoutMs: config.timeoutMs })
+    new HttpClient({ baseUrl, timeoutMs: config.timeoutMs, retry })
 
   return {
     auth: new AuthService(clientFor(config.services.auth)),
@@ -29,3 +33,6 @@ export const createServices = (config: AppConfig = getConfig()): Services => {
     report: new ReportService(clientFor(config.services.report)),
   }
 }
+
+export const createServicesWithoutRetry = (config: AppConfig = getConfig()): Services =>
+  createServices(config, NO_RETRY)
