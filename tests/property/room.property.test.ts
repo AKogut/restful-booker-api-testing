@@ -6,20 +6,21 @@ import type { RoomPayload } from '@models/room'
 import { createServices } from '@services/service-factory'
 import { expectedStatus } from '@profiles/target-profile'
 import { sharedToken } from '../support/session'
+import { CreatedResources } from '@support/created-resources'
 
 const { room } = createServices()
 
 const RUNS = 6
 
 let token: string
-const createdRoomIds = new Set<number>()
+const createdRoomIds = new CreatedResources('room')
 
 beforeAll(() => {
   token = sharedToken()
 })
 
 afterAll(async () => {
-  for (const roomid of createdRoomIds) {
+  for (const roomid of createdRoomIds.all()) {
     await room.delete(roomid, token)
   }
 })

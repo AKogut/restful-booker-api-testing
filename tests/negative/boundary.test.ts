@@ -9,12 +9,14 @@ import { createServicesWithoutRetry } from '@services/service-factory'
 import { validationMessages } from '@support/validation'
 import { provisionRoom } from '@support/rooms'
 import { sharedToken } from '../support/session'
+import { CreatedResources } from '@support/created-resources'
+import { itWhenSupported } from '../support/target'
 
 const { room, booking } = createServicesWithoutRetry()
 
 let token: string
 let testRoom: Room
-const createdBookingIds = new Set<number>()
+const createdBookingIds = new CreatedResources('booking')
 
 beforeAll(async () => {
   token = sharedToken()
@@ -22,7 +24,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  for (const bookingid of createdBookingIds) {
+  for (const bookingid of createdBookingIds.all()) {
     await booking.delete(bookingid, token)
   }
   await room.delete(testRoom.roomid, token)
@@ -62,7 +64,7 @@ describe('booking boundary @negative', () => {
     }
   })
 
-  it.fails(
+  itWhenSupported('defects.documented').fails(
     'rejects a booking for a non-existent room (known RBP defect: creates an orphan)',
     async () => {
       const response = await booking.create(bookingPayload(999_999))

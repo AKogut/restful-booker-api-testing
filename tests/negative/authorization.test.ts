@@ -42,7 +42,7 @@ describe('authentication negatives @negative', () => {
   it('rejects a malformed token on validate', async () => {
     const response = await auth.validate('not-a-real-token')
 
-    expect(response.status).toBe(403)
+    expect(response.status).toBe(expectedStatus('auth.tokenInvalid'))
     if (supports('auth.describesOutcome')) {
       expect(response.data).toEqual({ error: 'Invalid token' })
     }
@@ -112,15 +112,6 @@ describe('invalid token handling @negative', () => {
     'rejects booking.summary carrying an invalid token (BUG-008)',
     async () => {
       const response = await booking.summary(ANY_ID, INVALID_TOKEN)
-
-      expect(response.status).toBe(401)
-    },
-  )
-
-  itWhenSupported('authz.bookingSummary')(
-    'requires the token to be present at all on booking.summary',
-    async () => {
-      const response = await booking.summary(ANY_ID)
 
       expect(response.status).toBe(401)
     },

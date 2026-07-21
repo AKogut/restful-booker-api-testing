@@ -22,6 +22,8 @@ import { provisionRoom } from '@support/rooms'
 import { expectedStatus } from '@profiles/target-profile'
 import { itWhenSupported } from '../support/target'
 import { sharedToken } from '../support/session'
+import { CreatedResources } from '@support/created-resources'
+import { track } from '@support/run-registry'
 
 const { auth, room, booking, message, branding, report } = createServices()
 const { credentials } = getConfig()
@@ -29,7 +31,7 @@ const { credentials } = getConfig()
 let token: string
 let testRoom: Room
 let testBooking: Booking
-const createdMessageIds = new Set<number>()
+const createdMessageIds = new CreatedResources('message')
 
 beforeAll(async () => {
   token = sharedToken()
@@ -38,11 +40,12 @@ beforeAll(async () => {
   if (created === undefined) {
     throw new Error('Booking setup failed')
   }
+  track('booking', created.bookingid)
   testBooking = created
 })
 
 afterAll(async () => {
-  for (const id of createdMessageIds) {
+  for (const id of createdMessageIds.all()) {
     await message.delete(id, token)
   }
   await booking.delete(testBooking.bookingid, token)
