@@ -15,6 +15,7 @@ on:
           - negative
           - data-driven
           - property
+          - security
           - live
 
 jobs:
@@ -39,6 +40,7 @@ jobs:
             negative) npm run test:negative ;;
             data-driven) npm run test:data-driven ;;
             property) npm run test:property ;;
+            security) npm run test:security ;;
             live) npm run test:live ;;
             *) echo "Unknown suite: ${{ inputs.suite }}" && exit 1 ;;
           esac

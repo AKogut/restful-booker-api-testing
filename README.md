@@ -75,6 +75,7 @@ docs/         Architecture, test strategy, bug reports
 - **Health** — `/actuator/health` gate across all services
 - **Contract** — every response validated against its schema; cross-service consistency
 - **Negative & data-driven** — authorization, boundary, malformed, table-driven, and property-based (incl. double-booking)
+- **Security** — BFLA/IDOR authorization matrix, token tampering, header hygiene, secret non-leakage (OWASP API-oriented)
 
 ## Getting Started
 
@@ -87,20 +88,21 @@ npm test
 
 ## Scripts
 
-| Script                  | Purpose                                   |
-| ----------------------- | ----------------------------------------- |
-| `npm test`              | Run the full suite                        |
-| `npm run test:smoke`    | Fast smoke suite                          |
-| `npm run test:unit`     | Hermetic unit tests                       |
-| `npm run test:live`     | All five live suites against the platform |
-| `npm run coverage`      | Full suite with enforced thresholds       |
-| `npm run test:local`    | Live suites against the Docker stack      |
-| `npm run docker:up`     | Start the local RBP stack                 |
-| `npm run docker:down`   | Stop it and drop volumes                  |
-| `npm run test:contract` | Schema, drift & cross-service checks      |
-| `npm run typecheck`     | TypeScript type checking                  |
-| `npm run lint`          | ESLint                                    |
-| `npm run format`        | Prettier                                  |
+| Script                  | Purpose                                     |
+| ----------------------- | ------------------------------------------- |
+| `npm test`              | Run the full suite                          |
+| `npm run test:smoke`    | Fast smoke suite                            |
+| `npm run test:unit`     | Hermetic unit tests                         |
+| `npm run test:live`     | All five live suites against the platform   |
+| `npm run coverage`      | Full suite with enforced thresholds         |
+| `npm run test:local`    | Live suites against the Docker stack        |
+| `npm run docker:up`     | Start the local RBP stack                   |
+| `npm run docker:down`   | Stop it and drop volumes                    |
+| `npm run test:contract` | Schema, drift & cross-service checks        |
+| `npm run test:security` | OWASP-oriented authorization & token checks |
+| `npm run typecheck`     | TypeScript type checking                    |
+| `npm run lint`          | ESLint                                      |
+| `npm run format`        | Prettier                                    |
 
 ## Contracts
 

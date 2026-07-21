@@ -46,6 +46,7 @@ Encoded as `supports(key)`; suites gate with `itWhenSupported(key)`.
 | `auth.tokenInBody`      | ✅   | ❌    | Body-shape assertion on login is skipped        |
 | `auth.describesOutcome` | ✅   | ❌    | Error/success body assertions are skipped       |
 | `authz.bookingSummary`  | ✅   | ❌    | Booking-summary authorization tests are skipped |
+| `errors.sanitized`      | ✅   | ❌    | Clean-error assertion runs only where it holds  |
 | `defects.documented`    | ✅   | ❌    | Every defect guard is skipped                   |
 
 ### Why the defect guards are live-only
@@ -54,7 +55,7 @@ Every report in [`bug-reports/`](bug-reports/) was found against live and descri
 
 Two of them are notably **not** reproducible locally, which is itself informative:
 
-- [BUG-003](bug-reports/BUG-003-booking-update-leaks-internals.md) — live leaks internals only on booking update. **Locally every validation error leaks them**, including the full `org.springframework…` stack and `SQLException` text. Live has partially fixed what the public version does everywhere.
+- [BUG-003](bug-reports/BUG-003-booking-update-leaks-internals.md) — live leaks internals only on booking update. **Locally every validation error leaks them**, including the full `org.springframework…` stack and `SQLException` text. Live has partially fixed what the public version does everywhere. This is exactly why `errors.sanitized` is a live-only capability: the security suite's "no internals in a validation error" assertion holds on live and would fail on local, so it runs only where it is true.
 - [BUG-008](bug-reports/BUG-008-summary-accepts-any-token.md) — locally `booking.summary` has no authentication at all, so there is no presence-only check to defeat.
 
 ## Response shape differences
