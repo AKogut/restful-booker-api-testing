@@ -25,3 +25,6 @@ Thumbs.db
 *.tsbuildinfo
 .cache/
 .tmp/
+
+zap-report/
+zap.yaml

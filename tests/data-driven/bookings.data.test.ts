@@ -7,7 +7,7 @@ import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
 import { validationMessages } from '@support/validation'
 import bookingCases from '../data/booking-cases.json'
-import { supports } from '@profiles/target-profile'
+import { expectedStatus, supports } from '@profiles/target-profile'
 import { sharedToken } from '../support/session'
 import { CreatedResources } from '@support/created-resources'
 
@@ -61,7 +61,11 @@ describe('booking creation dataset @data-driven', () => {
 
       const response = await booking.create(payload)
 
-      expect(response.status).toBe(testCase.expected.status)
+      const expected =
+        testCase.expected.status === 201
+          ? expectedStatus('booking.created')
+          : testCase.expected.status
+      expect(response.status).toBe(expected)
 
       const created = createdBooking(response.data)
       if (created !== undefined) {

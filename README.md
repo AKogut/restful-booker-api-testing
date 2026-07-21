@@ -2,6 +2,7 @@
 
 [![CI](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/ci.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/ci.yml)
 [![Report](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/report.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/report.yml)
+[![Security Scan](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/security-scan.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/security-scan.yml)
 [![Allure report](https://img.shields.io/badge/Allure_report-live-brightgreen.svg)](https://akogut.github.io/restful-booker-api-testing/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-LTS-brightgreen.svg)](./.nvmrc)
@@ -61,6 +62,7 @@ tests/
   negative/   Auth, authorization, boundary, malformed input
   data-driven/ JSON-dataset driven room & booking matrices
   property/   fast-check property-based suites
+  security/   OWASP-oriented authz, token & injection checks
   data/       External test-case datasets
 docs/         Architecture, test strategy, bug reports
 ```
@@ -93,7 +95,7 @@ npm test
 | `npm test`              | Run the full suite                          |
 | `npm run test:smoke`    | Fast smoke suite                            |
 | `npm run test:unit`     | Hermetic unit tests                         |
-| `npm run test:live`     | All five live suites against the platform   |
+| `npm run test:live`     | All six live suites against the platform    |
 | `npm run coverage`      | Full suite with enforced thresholds         |
 | `npm run test:local`    | Live suites against the Docker stack        |
 | `npm run docker:up`     | Start the local RBP stack                   |
@@ -221,11 +223,11 @@ itWhenSupported('defects.documented').fails(
 )
 ```
 
-Each guard is paired with a written report in [docs/bug-reports/](docs/bug-reports/) — nine reports, nine guards.
+Each guard is paired with a written report in [docs/bug-reports/](docs/bug-reports/) — twelve reports, twelve guards.
 
 ## Defects Found
 
-Nine confirmed platform defects, each with reproduction steps, evidence and a guarding test:
+Twelve confirmed platform defects, each with reproduction steps, evidence and a guarding test:
 
 | ID                                                                    | Defect                                                     | Severity |
 | --------------------------------------------------------------------- | ---------------------------------------------------------- | -------- |
@@ -238,6 +240,9 @@ Nine confirmed platform defects, each with reproduction steps, evidence and a gu
 | [BUG-007](docs/bug-reports/BUG-007-invalid-token-returns-500.md)      | An invalid token returns 500 instead of 401                | Major    |
 | [BUG-008](docs/bug-reports/BUG-008-summary-accepts-any-token.md)      | Booking summary accepts any non-empty token                | Major    |
 | [BUG-009](docs/bug-reports/BUG-009-report-stalls-on-invalid-token.md) | Report stalls ~31 s before rejecting an invalid token      | Major    |
+| [BUG-010](docs/bug-reports/BUG-010-infrastructure-headers-leak.md)    | Responses leak infrastructure details in headers           | Minor    |
+| [BUG-011](docs/bug-reports/BUG-011-missing-security-headers.md)       | API responses carry no standard security headers           | Minor    |
+| [BUG-012](docs/bug-reports/BUG-012-oversized-input-returns-500.md)    | Oversized string input returns 500 instead of 400          | Minor    |
 
 ## Reporting
 
@@ -250,7 +255,8 @@ Nine confirmed platform defects, each with reproduction steps, evidence and a gu
 - [Architecture](docs/architecture.md) — layering, request flow, run lifecycle, retries
 - [Test Strategy](docs/test-strategy.md) — scope, risk prioritisation, suite taxonomy, CI strategy
 - [Target Differences](docs/target-differences.md) — live vs local, and why they are not the same API
-- [Bug Reports](docs/bug-reports/) — nine defects with evidence and guarding tests
+- [Security Scan](docs/security-scan.md) — OWASP ZAP baseline in CI, and how it complements the security suite
+- [Bug Reports](docs/bug-reports/) — twelve defects with evidence and guarding tests
 
 ## Contributing
 

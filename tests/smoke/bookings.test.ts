@@ -44,7 +44,7 @@ describe('booking service @smoke', () => {
 
     const response = await booking.create(payload)
 
-    expect(response.status).toBe(201)
+    expect(response.status).toBe(expectedStatus('booking.created'))
     const created = createdBooking(response.data)
     if (created === undefined) {
       throw new Error(`Booking creation failed with status ${response.status}`)
@@ -151,7 +151,7 @@ describe('booking service @smoke', () => {
 
     const response = await booking.update(created.bookingid, updatePayload)
 
-    expect(response.status).toBe(403)
+    expect(response.status).toBe(expectedStatus('authz.forbidden'))
   })
 
   it('rejects a deletion without a token', async () => {
@@ -159,7 +159,7 @@ describe('booking service @smoke', () => {
 
     const response = await booking.delete(created.bookingid)
 
-    expect(response.status).toBe(403)
+    expect(response.status).toBe(expectedStatus('authz.forbidden'))
   })
 
   itWhenSupported('defects.documented').fails(
@@ -171,11 +171,12 @@ describe('booking service @smoke', () => {
       const response = await booking.update(created.bookingid, { ...base, firstname: 'X' }, token)
 
       expect(response.status).toBe(400)
-      if (!('errorMessage' in response.data)) {
+      const body = response.data
+      if (typeof body !== 'object' || body === null || !('errorMessage' in body)) {
         throw new Error('Expected a validation error body')
       }
-      expect(response.data.errorMessage).not.toContain('org.springframework')
-      expect(response.data.errorMessage).not.toContain('SQLException')
+      expect(body.errorMessage).not.toContain('org.springframework')
+      expect(body.errorMessage).not.toContain('SQLException')
     },
   )
 })

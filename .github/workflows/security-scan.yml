@@ -1,0 +1,68 @@
+name: Security Scan
+
+on:
+  schedule:
+    - cron: '0 4 * * 1'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zap-baseline:
+    name: ZAP baseline scan (dockerized RBP)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Start the dockerized platform
+        run: docker compose up -d
+
+      - name: Wait for every service to report healthy
+        run: |
+          services="3004/auth 3001/room 3000/booking 3002/branding 3005/report 3006/message"
+          for attempt in $(seq 1 60); do
+            ready=0
+            for service in $services; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${service}/actuator/health" 2>/dev/null || true)
+              [ "$code" = "200" ] && ready=$((ready + 1))
+            done
+            if [ "$ready" = "6" ]; then echo "all six services healthy"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::platform did not become healthy in time"
+          docker compose logs
+          exit 1
+
+      - name: Run the ZAP baseline scan
+        run: |
+          mkdir -p zap-report
+          docker run --network host -v "$PWD:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
+            zap-baseline.py \
+            -t http://localhost:3001/room/ \
+            -c .zap/rules.tsv \
+            -r zap-report/baseline.html \
+            -w zap-report/baseline.md \
+            -J zap-report/baseline.json \
+            -I \
+            && echo "scan_exit=0" >> "$GITHUB_ENV" \
+            || echo "scan_exit=$?" >> "$GITHUB_ENV"
+
+      - name: Upload the ZAP report
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: zap-baseline-report
+          path: zap-report/
+
+      - name: Fail the run only on FAIL-level alerts
+        run: |
+          if [ "${scan_exit:-0}" != "0" ]; then
+            echo "::error::ZAP flagged FAIL-level alerts — download the zap-baseline-report artifact"
+            exit 1
+          fi
+          echo "No FAIL-level alerts. Warnings, if any, are in the report artifact."
+
+      - name: Tear down the platform
+        if: always()
+        run: docker compose down -v

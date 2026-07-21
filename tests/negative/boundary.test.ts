@@ -11,6 +11,7 @@ import { provisionRoom } from '@support/rooms'
 import { sharedToken } from '../support/session'
 import { CreatedResources } from '@support/created-resources'
 import { itWhenSupported } from '../support/target'
+import { createdBooking } from '@support/bookings'
 
 const { room, booking } = createServicesWithoutRetry()
 
@@ -69,8 +70,9 @@ describe('booking boundary @negative', () => {
     async () => {
       const response = await booking.create(bookingPayload(999_999))
 
-      if ('bookingid' in response.data) {
-        createdBookingIds.add(response.data.bookingid)
+      const created = createdBooking(response.data)
+      if (created !== undefined) {
+        createdBookingIds.add(created.bookingid)
       }
       expect(response.status).toBe(404)
     },
