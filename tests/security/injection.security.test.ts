@@ -1,0 +1,109 @@
+import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { roomPayload } from '@factories/room-factory'
+import type { RoomPayload } from '@models/room'
+import { getConfig } from '@config/app-config'
+import { expectedStatus } from '@profiles/target-profile'
+import { createServicesWithoutRetry } from '@services/service-factory'
+import { CreatedResources } from '@support/created-resources'
+import { itWhenSupported } from '../support/target'
+import { sharedToken } from '../support/session'
+
+const { auth, room } = createServicesWithoutRetry(getConfig())
+
+const asPayload = (value: Record<string, unknown>): RoomPayload => value as unknown as RoomPayload
+
+let token: string
+const createdRoomIds = new CreatedResources('room')
+
+const createNamed = async (name: string, overrides: Record<string, unknown> = {}) => {
+  const payload = roomPayload({ roomName: name, ...overrides })
+  const response = await room.create(payload, token)
+  const listing = await room.list()
+  const created = listing.data.rooms.find((entry) => entry.roomName === name)
+  if (created !== undefined) {
+    createdRoomIds.add(created.roomid)
+  }
+  return { response, created }
+}
+
+beforeAll(() => {
+  token = sharedToken()
+})
+
+afterAll(async () => {
+  for (const roomid of createdRoomIds.all()) {
+    await room.delete(roomid, token)
+  }
+})
+
+describe('injection is treated as data @security', () => {
+  const INJECTION_NAMES = ["robert'); DROP TABLE rooms;--", "1' OR '1'='1", '${7*7}', '{{7*7}}']
+
+  it.each(INJECTION_NAMES)('stores %s as a literal room name', async (name) => {
+    const { response, created } = await createNamed(name)
+
+    expect(response.status).toBe(expectedStatus('resource.created'))
+    expect(created?.roomName).toBe(name)
+  })
+
+  it('keeps the room listing intact after an injection attempt', async () => {
+    const listing = await room.list()
+
+    expect(listing.status).toBe(200)
+    expect(Array.isArray(listing.data.rooms)).toBe(true)
+    expect(listing.data.rooms.length).toBeGreaterThan(0)
+  })
+
+  it('rejects an injection payload in the login username', async () => {
+    const response = await auth.login({ username: "admin'--", password: 'anything' })
+
+    expect(response.status).toBe(expectedStatus('auth.rejected'))
+  })
+})
+
+describe('mass assignment @security', () => {
+  it('ignores a caller-supplied roomid and assigns its own', async () => {
+    const { created } = await createNamed(`MA-${Date.now() % 100000}`, { roomid: 88_888 })
+
+    expect(created).toBeDefined()
+    expect(created?.roomid).not.toBe(88_888)
+  })
+
+  it('ignores an unexpected privileged field', async () => {
+    const { response, created } = await createNamed(`AA-${Date.now() % 100000}`, {
+      isAdmin: true,
+      approved: true,
+    })
+
+    expect(response.status).toBe(expectedStatus('resource.created'))
+    expect(created).toBeDefined()
+  })
+})
+
+describe('input type validation @security', () => {
+  it.each<[string, Record<string, unknown>]>([
+    ['a non-numeric price', { roomPrice: 'NaN' }],
+    ['a non-boolean accessible flag', { accessible: 'yes' }],
+    ['a non-array features field', { features: 'WiFi' }],
+  ])('rejects %s with a 4xx', async (_name, override) => {
+    const response = await room.create(asPayload({ ...roomPayload(), ...override }), token)
+
+    expect(response.status).toBeGreaterThanOrEqual(400)
+    expect(response.status).toBeLessThan(500)
+  })
+})
+
+describe('oversized input @security', () => {
+  itWhenSupported('defects.documented').fails(
+    'rejects an oversized description cleanly instead of crashing (BUG-012)',
+    async () => {
+      const response = await room.create(
+        asPayload({ ...roomPayload(), description: 'A'.repeat(5000) }),
+        token,
+      )
+
+      expect(response.status).toBeGreaterThanOrEqual(400)
+      expect(response.status).toBeLessThan(500)
+    },
+  )
+})

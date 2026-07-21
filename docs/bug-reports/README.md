@@ -15,3 +15,4 @@ Defects found in the Restful Booker Platform while building this framework. Each
 | [BUG-009](BUG-009-report-stalls-on-invalid-token.md) | Report stalls ~31 s before rejecting an invalid token                 | report        | Major    | Open   |
 | [BUG-010](BUG-010-infrastructure-headers-leak.md)    | Responses leak infrastructure details in headers                      | all           | Minor    | Open   |
 | [BUG-011](BUG-011-missing-security-headers.md)       | API responses carry no standard security headers                      | all           | Minor    | Open   |
+| [BUG-012](BUG-012-oversized-input-returns-500.md)    | Oversized string input returns 500 instead of 400                     | room          | Minor    | Open   |
