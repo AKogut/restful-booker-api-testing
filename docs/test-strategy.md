@@ -34,7 +34,7 @@ Verify the Restful Booker Platform API — six independent Spring Boot services 
 | `data-driven` | live    | Room and booking validation matrices driven by external JSON datasets                                                   | `npm run test:data-driven` |
 | `property`    | live    | fast-check properties: payload round-trip, double-booking rejection, summary reflection                                 | `npm run test:property`    |
 
-`npm run test:live` runs all five live suites; `npm test` runs everything; `npm run coverage` adds enforced thresholds.
+`npm run test:live` runs all six live suites; `npm test` runs everything; `npm run coverage` adds enforced thresholds.
 
 ## Entry and exit criteria
 
@@ -49,7 +49,7 @@ Every confirmed platform defect gets:
 1. a report in [`docs/bug-reports/`](bug-reports/) with repro steps, evidence, impact and severity,
 2. an `it.fails` test that encodes the **expected correct behaviour**.
 
-This keeps defects visible instead of silently accommodated, and makes a platform fix surface immediately as a failing test rather than going unnoticed. Report-to-test parity is intentional: nine reports, nine guards — ten test cases, since BUG-007 covers two endpoints. Every guard is gated on `defects.documented`, so it runs only against the target whose behaviour it documents.
+This keeps defects visible instead of silently accommodated, and makes a platform fix surface immediately as a failing test rather than going unnoticed. Report-to-test parity is intentional: eleven reports, each guarded. Most guards are gated on `defects.documented` and run only against the target whose behaviour they document; the header findings (BUG-010, BUG-011) are deployment-specific and gated the same way.
 
 An `it.fails` test is only as good as its failure reason. A guard that passes because the request timed out proves nothing about the defect it claims to cover, so any `it.fails` whose runtime approaches the client timeout is treated as suspect and re-examined — that is how [BUG-009](bug-reports/BUG-009-report-stalls-on-invalid-token.md) was found.
 

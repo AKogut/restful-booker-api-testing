@@ -13,3 +13,5 @@ Defects found in the Restful Booker Platform while building this framework. Each
 | [BUG-007](BUG-007-invalid-token-returns-500.md)      | An invalid token returns 500 instead of 401                           | room, booking | Major    | Open   |
 | [BUG-008](BUG-008-summary-accepts-any-token.md)      | Booking summary accepts any non-empty token                           | booking       | Major    | Open   |
 | [BUG-009](BUG-009-report-stalls-on-invalid-token.md) | Report stalls ~31 s before rejecting an invalid token                 | report        | Major    | Open   |
+| [BUG-010](BUG-010-infrastructure-headers-leak.md)    | Responses leak infrastructure details in headers                      | all           | Minor    | Open   |
+| [BUG-011](BUG-011-missing-security-headers.md)       | API responses carry no standard security headers                      | all           | Minor    | Open   |

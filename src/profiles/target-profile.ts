@@ -16,6 +16,7 @@ const CAPABILITIES = {
   'auth.tokenInBody': { live: true, local: false },
   'auth.describesOutcome': { live: true, local: false },
   'authz.bookingSummary': { live: true, local: false },
+  'errors.sanitized': { live: true, local: false },
   'defects.documented': { live: true, local: false },
 } satisfies Record<string, ByTarget<boolean>>
 
