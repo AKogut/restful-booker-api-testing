@@ -1,5 +1,5 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
-import { roomPayload } from '@factories/room-factory'
+import { nextRoomName, roomPayload } from '@factories/room-factory'
 import type { RoomPayload } from '@models/room'
 import { getConfig } from '@config/app-config'
 import { expectedStatus } from '@profiles/target-profile'
@@ -15,11 +15,15 @@ const asPayload = (value: Record<string, unknown>): RoomPayload => value as unkn
 let token: string
 const createdRoomIds = new CreatedResources('room')
 
-const createNamed = async (name: string, overrides: Record<string, unknown> = {}) => {
+const createNamed = async (
+  name: string,
+  marker: string,
+  overrides: Record<string, unknown> = {},
+) => {
   const payload = roomPayload({ roomName: name, ...overrides })
   const response = await room.create(payload, token)
   const listing = await room.list()
-  const created = listing.data.rooms.find((entry) => entry.roomName === name)
+  const created = listing.data.rooms.find((entry) => entry.roomName.includes(marker))
   if (created !== undefined) {
     createdRoomIds.add(created.roomid)
   }
@@ -37,10 +41,13 @@ afterAll(async () => {
 })
 
 describe('injection is treated as data @security', () => {
-  const INJECTION_NAMES = ["robert'); DROP TABLE rooms;--", "1' OR '1'='1", '${7*7}', '{{7*7}}']
+  const INJECTION_PAYLOADS = ["robert'); DROP TABLE rooms;--", "1' OR '1'='1", '${7*7}', '{{7*7}}']
 
-  it.each(INJECTION_NAMES)('stores %s as a literal room name', async (name) => {
-    const { response, created } = await createNamed(name)
+  it.each(INJECTION_PAYLOADS)('stores %s as a literal room name', async (payload) => {
+    const marker = nextRoomName()
+    const name = `${payload} ${marker}`
+
+    const { response, created } = await createNamed(name, marker)
 
     expect(response.status).toBe(expectedStatus('resource.created'))
     expect(created?.roomName).toBe(name)
@@ -63,14 +70,16 @@ describe('injection is treated as data @security', () => {
 
 describe('mass assignment @security', () => {
   it('ignores a caller-supplied roomid and assigns its own', async () => {
-    const { created } = await createNamed(`MA-${Date.now() % 100000}`, { roomid: 88_888 })
+    const marker = nextRoomName()
+    const { created } = await createNamed(`MA-${marker}`, marker, { roomid: 88_888 })
 
     expect(created).toBeDefined()
     expect(created?.roomid).not.toBe(88_888)
   })
 
   it('ignores an unexpected privileged field', async () => {
-    const { response, created } = await createNamed(`AA-${Date.now() % 100000}`, {
+    const marker = nextRoomName()
+    const { response, created } = await createNamed(`AA-${marker}`, marker, {
       isAdmin: true,
       approved: true,
     })

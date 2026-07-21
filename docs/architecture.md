@@ -33,6 +33,7 @@ tests/                     specifications only
   negative/                auth, authorization, boundary, malformed
   data-driven/             JSON-dataset driven room and booking matrices
   property/                fast-check property-based suites
+  security/                OWASP-oriented authz, token and injection checks
   data/                    external test-case datasets
   support/                 target gating and shared-token helpers
 

@@ -33,6 +33,7 @@ Verify the Restful Booker Platform API — six independent Spring Boot services 
 | `negative`    | live    | Credential rejection, authorization matrix, boundary and malformed input                                                | `npm run test:negative`    |
 | `data-driven` | live    | Room and booking validation matrices driven by external JSON datasets                                                   | `npm run test:data-driven` |
 | `property`    | live    | fast-check properties: payload round-trip, double-booking rejection, summary reflection                                 | `npm run test:property`    |
+| `security`    | live    | OWASP-oriented: BFLA/IDOR authorization, token tampering, injection, mass-assignment, input handling                    | `npm run test:security`    |
 
 `npm run test:live` runs all six live suites; `npm test` runs everything; `npm run coverage` adds enforced thresholds.
 
@@ -93,6 +94,7 @@ They run **different versions of the same API**, so expectations are declared pe
 | Push to `main`      | Full suite + Allure report published to GitHub Pages                                     |
 | Nightly 03:00 UTC   | Full suite against live platform; report republished; the run fails if the suite was red |
 | Manual              | `Tests (manual)` workflow — any single suite or all together                             |
+| Weekly (Mon 04:00)  | OWASP ZAP baseline scan against the dockerized platform ([details](security-scan.md))    |
 
 Static checks and unit tests run in parallel and gate the live job, so a broken build never reaches the shared environment.
 

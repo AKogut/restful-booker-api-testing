@@ -74,17 +74,20 @@ describe('response contracts @contract', () => {
   })
 
   it('message list and detail match their schemas', async () => {
-    const created = await message.create(messagePayload())
+    const payload = messagePayload()
+    const created = await message.create(payload)
     expect(created.status).toBe(expectedStatus('resource.created'))
 
-    const list = await message.list()
+    const list = await message.list(token)
     const validated = assertValid(messageListSchema, list.data)
-    const mine = validated.messages.at(-1)
-    if (mine !== undefined) {
-      createdMessageIds.add(mine.id)
-      const detail = await message.getById(mine.id)
-      assertValid(messageSchema, detail.data)
+    const mine = validated.messages.find((entry) => entry.subject === payload.subject)
+    if (mine === undefined) {
+      throw new Error(`Created message "${payload.subject}" not found in the inbox`)
     }
+    createdMessageIds.add(mine.id)
+
+    const detail = await message.getById(mine.id, token)
+    assertValid(messageSchema, detail.data)
   })
 
   it('branding matches its schema', async () => {
