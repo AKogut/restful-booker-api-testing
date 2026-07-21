@@ -4,10 +4,12 @@ type ByTarget<T> = Readonly<Record<TestMode, T>>
 
 const STATUS = {
   'resource.created': { live: 200, local: 201 },
+  'booking.created': { live: 201, local: 201 },
   'auth.rejected': { live: 401, local: 403 },
   'authz.missingToken': { live: 401, local: 403 },
   'authz.missingToken.report': { live: 401, local: 400 },
   'authz.forbidden': { live: 403, local: 403 },
+  'auth.tokenInvalid': { live: 403, local: 403 },
 } satisfies Record<string, ByTarget<number>>
 
 const CAPABILITIES = {

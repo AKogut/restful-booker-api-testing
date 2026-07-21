@@ -5,11 +5,12 @@ import { createServices } from '@services/service-factory'
 import { roomPayload } from '@factories/room-factory'
 import { itWhenSupported } from '../support/target'
 import { sharedToken } from '../support/session'
+import { CreatedResources } from '@support/created-resources'
 
 const { room } = createServices()
 
 let token: string
-const createdRoomIds = new Set<number>()
+const createdRoomIds = new CreatedResources('room')
 
 const createRoom = async (payload: RoomPayload): Promise<Room> => {
   const creation = await room.create(payload, token)
@@ -32,7 +33,7 @@ beforeAll(() => {
 })
 
 afterAll(async () => {
-  for (const roomid of createdRoomIds) {
+  for (const roomid of createdRoomIds.all()) {
     await room.delete(roomid, token)
   }
 })
@@ -84,7 +85,7 @@ describe('room service @smoke', () => {
     const created = await createRoom(roomPayload())
 
     const deletion = await room.delete(created.roomid, token)
-    createdRoomIds.delete(created.roomid)
+    createdRoomIds.forget(created.roomid)
 
     expect(deletion.status).toBe(202)
 
@@ -97,7 +98,7 @@ describe('room service @smoke', () => {
     async () => {
       const created = await createRoom(roomPayload())
       await room.delete(created.roomid, token)
-      createdRoomIds.delete(created.roomid)
+      createdRoomIds.forget(created.roomid)
 
       const response = await room.getById(created.roomid)
 

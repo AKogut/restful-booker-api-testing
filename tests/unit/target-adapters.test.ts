@@ -1,8 +1,13 @@
+import { mkdtempSync, writeFileSync } from 'node:fs'
+import { tmpdir } from 'node:os'
+import { join } from 'node:path'
 import { describe, expect, it } from 'vitest'
 import type { ApiResponse } from '@client/http-client'
 import type { AuthToken } from '@models/auth'
 import type { ErrorResponse } from '@models/common'
 import { createdBooking } from '@support/bookings'
+import { CreatedResources } from '@support/created-resources'
+import { clearRegistry, readRegistry } from '@support/run-registry'
 import { extractToken } from '@support/session'
 import { validationMessages } from '@support/validation'
 
@@ -90,5 +95,47 @@ describe('validationMessages', () => {
 
   it('rejects a non-string array', () => {
     expect(validationMessages({ errors: [1, 2] })).toBeUndefined()
+  })
+})
+
+describe('CreatedResources', () => {
+  it('hands back everything it was given', () => {
+    const ledger = new CreatedResources('booking')
+
+    ledger.add(1)
+    ledger.add(2)
+
+    expect(ledger.all()).toEqual([1, 2])
+  })
+
+  it('drops an id that was already cleaned up', () => {
+    const ledger = new CreatedResources('room')
+    ledger.add(1)
+    ledger.add(2)
+
+    ledger.forget(1)
+
+    expect(ledger.all()).toEqual([2])
+  })
+
+  it('registers each id with the run registry exactly once', () => {
+    const registry = join(mkdtempSync(join(tmpdir(), 'ledger-test-')), 'registry.jsonl')
+    writeFileSync(registry, '')
+    process.env.RUN_REGISTRY = registry
+
+    try {
+      const ledger = new CreatedResources('message')
+      ledger.add(5)
+      ledger.add(5)
+
+      expect(readRegistry(registry)).toEqual([
+        { kind: 'message', id: 5 },
+        { kind: 'message', id: 5 },
+      ])
+      expect(ledger.all()).toEqual([5])
+    } finally {
+      delete process.env.RUN_REGISTRY
+      clearRegistry(registry)
+    }
   })
 })

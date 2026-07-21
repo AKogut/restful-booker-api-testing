@@ -52,7 +52,7 @@ src/
   schemas/    Zod schemas and generated JSON Schema contracts
   services/   AuthService, RoomService, BookingService, MessageService,
               BrandingService, ReportService
-  factories/  faker-based test data builders (rooms, bookings)
+  factories/  faker-based builders and fast-check arbitraries
   support/    session and provisioning helpers for suites
 tests/
   unit/       Hermetic framework tests (no network)
@@ -92,7 +92,7 @@ npm test
 | `npm test`              | Run the full suite                        |
 | `npm run test:smoke`    | Fast smoke suite                          |
 | `npm run test:unit`     | Hermetic unit tests                       |
-| `npm run test:live`     | All live suites (smoke+contract+negative) |
+| `npm run test:live`     | All five live suites against the platform |
 | `npm run coverage`      | Full suite with enforced thresholds       |
 | `npm run test:local`    | Live suites against the Docker stack      |
 | `npm run docker:up`     | Start the local RBP stack                 |
@@ -154,6 +154,89 @@ itWhenSupported('auth.tokenInBody')('returns the token in the body', …)
 
 `src/profiles/target-profile.ts` holds every difference in one place. Full inventory, including why the defect guards are live-only, in [docs/target-differences.md](docs/target-differences.md).
 
+## Writing a Test
+
+Tests never touch HTTP. A service method returns a typed `ApiResponse<T>`, and a non-2xx is a value to assert rather than an exception to catch:
+
+```ts
+const { room } = createServices()
+
+const response = await room.create(roomPayload(), token)
+
+expect(response.status).toBe(expectedStatus('resource.created'))
+```
+
+Services are thin and declarative — the fluent builder carries the token, so a negative test is just the same call without one:
+
+```ts
+export class RoomService {
+  async create(
+    payload: RoomPayload,
+    token?: string,
+  ): Promise<ApiResponse<SuccessResponse | ErrorsResponse>> {
+    return this.client.request(RequestBuilder.post('').withBody(payload).withToken(token).build())
+  }
+}
+```
+
+`withToken(undefined)` omits the header entirely, which is why `room.create(payload)` reads as "create without authenticating" instead of needing a separate code path.
+
+### A cross-service test
+
+The most valuable assertions span services — a booking created through one service must surface in another's report:
+
+```ts
+it('a booking created via BookingService is reflected in the room report', async () => {
+  const response = await report.getByRoom(testRoom.roomid, token)
+  const validated = assertValid(reportSchema, response.data)
+
+  expect(validated.report).toContainEqual({
+    start: testBooking.bookingdates.checkin,
+    end: testBooking.bookingdates.checkout,
+    title: 'Unavailable',
+  })
+})
+```
+
+`assertValid()` parses the response through its Zod schema before the assertion runs, so a shape change fails as a contract violation with a precise path — not as a confusing `undefined` three lines later.
+
+### Guarding a known defect
+
+A platform bug is encoded as the behaviour that _should_ happen, marked `it.fails`. The suite stays green while the defect exists and turns red the moment it is fixed:
+
+```ts
+itWhenSupported('defects.documented').fails(
+  'returns 404 for a deleted room (known RBP defect: responds 500)',
+  async () => {
+    const created = await createRoom(roomPayload())
+    await room.delete(created.roomid, token)
+    createdRoomIds.forget(created.roomid)
+
+    const response = await room.getById(created.roomid)
+
+    expect(response.status).toBe(404)
+  },
+)
+```
+
+Each guard is paired with a written report in [docs/bug-reports/](docs/bug-reports/) — nine reports, nine guards.
+
+## Defects Found
+
+Nine confirmed platform defects, each with reproduction steps, evidence and a guarding test:
+
+| ID                                                                    | Defect                                                     | Severity |
+| --------------------------------------------------------------------- | ---------------------------------------------------------- | -------- |
+| [BUG-001](docs/bug-reports/BUG-001-token-survives-logout.md)          | Auth token remains valid after logout                      | Major    |
+| [BUG-002](docs/bug-reports/BUG-002-deleted-room-returns-500.md)       | Fetching a deleted room returns 500 instead of 404         | Minor    |
+| [BUG-003](docs/bug-reports/BUG-003-booking-update-leaks-internals.md) | Booking update errors leak internal implementation details | Major    |
+| [BUG-004](docs/bug-reports/BUG-004-message-inbox-public.md)           | Message inbox is readable without authentication           | Major    |
+| [BUG-005](docs/bug-reports/BUG-005-booking-nonexistent-room.md)       | A booking can be created for a non-existent room           | Major    |
+| [BUG-006](docs/bug-reports/BUG-006-branding-not-round-trippable.md)   | Branding cannot be round-tripped                           | Minor    |
+| [BUG-007](docs/bug-reports/BUG-007-invalid-token-returns-500.md)      | An invalid token returns 500 instead of 401                | Major    |
+| [BUG-008](docs/bug-reports/BUG-008-summary-accepts-any-token.md)      | Booking summary accepts any non-empty token                | Major    |
+| [BUG-009](docs/bug-reports/BUG-009-report-stalls-on-invalid-token.md) | Report stalls ~31 s before rejecting an invalid token      | Major    |
+
 ## Reporting
 
 - **JUnit** XML is produced by the CI pipeline for every run.
@@ -162,9 +245,10 @@ itWhenSupported('auth.tokenInBody')('returns the token in the body', …)
 
 ## Documentation
 
-- [Architecture](docs/architecture.md)
-- [Test Strategy](docs/test-strategy.md)
-- [Bug Reports](docs/bug-reports/)
+- [Architecture](docs/architecture.md) — layering, request flow, run lifecycle, retries
+- [Test Strategy](docs/test-strategy.md) — scope, risk prioritisation, suite taxonomy, CI strategy
+- [Target Differences](docs/target-differences.md) — live vs local, and why they are not the same API
+- [Bug Reports](docs/bug-reports/) — nine defects with evidence and guarding tests
 
 ## Contributing
 

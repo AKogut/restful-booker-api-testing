@@ -8,6 +8,7 @@ import { provisionRoom } from '@support/rooms'
 import { expectedStatus } from '@profiles/target-profile'
 import { itWhenSupported } from '../support/target'
 import { sharedToken } from '../support/session'
+import { track } from '@support/run-registry'
 
 const { branding, report, booking, room } = createServices()
 
@@ -23,6 +24,7 @@ beforeAll(async () => {
   if (created === undefined) {
     throw new Error('Booking setup failed')
   }
+  track('booking', created.bookingid)
   testBooking = created
 })
 

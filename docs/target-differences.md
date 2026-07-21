@@ -27,11 +27,13 @@ Encoded in `src/profiles/target-profile.ts` as `expectedStatus(key)`.
 
 | Key                         | live  | local | Meaning                                 |
 | --------------------------- | ----- | ----- | --------------------------------------- |
-| `resource.created`          | `200` | `201` | Room, booking or message created        |
+| `resource.created`          | `200` | `201` | Room or message created                 |
+| `booking.created`           | `201` | `201` | Booking created — agreed, kept explicit |
 | `auth.rejected`             | `401` | `403` | Bad credentials on login                |
 | `authz.missingToken`        | `401` | `403` | Protected endpoint called with no token |
 | `authz.missingToken.report` | `401` | `400` | Same, for report and branding update    |
 | `authz.forbidden`           | `403` | `403` | Agreed — kept explicit, not hard-coded  |
+| `auth.tokenInvalid`         | `403` | `403` | Malformed token on validate — agreed    |
 
 `authz.forbidden` is in the table despite both targets agreeing: a key that is currently identical still documents _where_ the contract is being asserted, and gives one place to change if a target moves.
 
@@ -44,7 +46,7 @@ Encoded as `supports(key)`; suites gate with `itWhenSupported(key)`.
 | `auth.tokenInBody`      | ✅   | ❌    | Body-shape assertion on login is skipped        |
 | `auth.describesOutcome` | ✅   | ❌    | Error/success body assertions are skipped       |
 | `authz.bookingSummary`  | ✅   | ❌    | Booking-summary authorization tests are skipped |
-| `defects.documented`    | ✅   | ❌    | The nine `it.fails` defect guards are skipped   |
+| `defects.documented`    | ✅   | ❌    | Every defect guard is skipped                   |
 
 ### Why the defect guards are live-only
 

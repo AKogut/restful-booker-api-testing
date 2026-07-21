@@ -6,6 +6,7 @@ import { createServices } from '@services/service-factory'
 import { validationMessages } from '@support/validation'
 import roomCases from '../data/room-cases.json'
 import { sharedToken } from '../support/session'
+import { CreatedResources } from '@support/created-resources'
 
 interface RoomCase {
   name: string
@@ -17,14 +18,14 @@ const { room } = createServices()
 const cases = roomCases as RoomCase[]
 
 let token: string
-const createdRoomIds = new Set<number>()
+const createdRoomIds = new CreatedResources('room')
 
 beforeAll(() => {
   token = sharedToken()
 })
 
 afterAll(async () => {
-  for (const roomid of createdRoomIds) {
+  for (const roomid of createdRoomIds.all()) {
     await room.delete(roomid, token)
   }
 })

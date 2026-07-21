@@ -8,6 +8,7 @@ import { createServices } from '@services/service-factory'
 import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
 import { sharedToken } from '../support/session'
+import { CreatedResources } from '@support/created-resources'
 
 const { booking, room } = createServices()
 
@@ -15,7 +16,7 @@ const RUNS = 8
 
 let token: string
 let testRoom: Room
-const createdBookingIds = new Set<number>()
+const createdBookingIds = new CreatedResources('booking')
 
 type Guest = Omit<BookingPayload, 'roomid' | 'bookingdates'>
 
@@ -38,7 +39,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  for (const bookingid of createdBookingIds) {
+  for (const bookingid of createdBookingIds.all()) {
     await booking.delete(bookingid, token)
   }
   await room.delete(testRoom.roomid, token)

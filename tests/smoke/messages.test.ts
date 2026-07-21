@@ -5,11 +5,12 @@ import { createServices } from '@services/service-factory'
 import { expectedStatus, supports } from '@profiles/target-profile'
 import { itWhenSupported } from '../support/target'
 import { sharedToken } from '../support/session'
+import { CreatedResources } from '@support/created-resources'
 
 const { message } = createServices()
 
 let token: string
-const createdMessageIds = new Set<number>()
+const createdMessageIds = new CreatedResources('message')
 
 const createMessage = async (payload: MessagePayload): Promise<number> => {
   const creation = await message.create(payload)
@@ -18,7 +19,7 @@ const createMessage = async (payload: MessagePayload): Promise<number> => {
     expect(creation.data).toEqual({ success: true })
   }
 
-  const listing = await message.list()
+  const listing = await message.list(token)
   const created = listing.data.messages.find((entry) => entry.subject === payload.subject)
   if (created === undefined) {
     throw new Error(`Created message "${payload.subject}" not found in the inbox`)
@@ -32,23 +33,26 @@ beforeAll(() => {
 })
 
 afterAll(async () => {
-  for (const messageid of createdMessageIds) {
+  for (const messageid of createdMessageIds.all()) {
     await message.delete(messageid, token)
   }
 })
 
 describe('message service @smoke', () => {
-  it('accepts a guest contact message', async () => {
-    const id = await createMessage(messagePayload())
+  it('accepts a guest contact message and files it in the inbox', async () => {
+    const payload = messagePayload()
 
-    expect(id).toBeTypeOf('number')
+    const id = await createMessage(payload)
+
+    const listing = await message.list(token)
+    expect(listing.data.messages.map((entry) => entry.id)).toContain(id)
   })
 
-  it('returns full contact details for a message', async () => {
+  it('returns full contact details to an authenticated reader', async () => {
     const payload = messagePayload()
     const id = await createMessage(payload)
 
-    const response = await message.getById(id)
+    const response = await message.getById(id, token)
 
     expect(response.status).toBe(200)
     expect(response.data).toMatchObject({
@@ -72,7 +76,7 @@ describe('message service @smoke', () => {
   it('marks a message as read', async () => {
     const id = await createMessage(messagePayload())
     const readState = async (): Promise<boolean | undefined> => {
-      const listing = await message.list()
+      const listing = await message.list(token)
       return listing.data.messages.find((entry) => entry.id === id)?.read
     }
     expect(await readState()).toBe(false)
@@ -87,11 +91,11 @@ describe('message service @smoke', () => {
     const id = await createMessage(messagePayload())
 
     const deletion = await message.delete(id, token)
-    createdMessageIds.delete(id)
+    createdMessageIds.forget(id)
 
     expect(deletion.status).toBe(202)
 
-    const listing = await message.list()
+    const listing = await message.list(token)
     expect(listing.data.messages.map((entry) => entry.id)).not.toContain(id)
   })
 
@@ -100,7 +104,7 @@ describe('message service @smoke', () => {
 
     const response = await message.markRead(id)
 
-    expect(response.status).toBe(403)
+    expect(response.status).toBe(expectedStatus('authz.forbidden'))
   })
 
   it('rejects deleting a message without a token', async () => {
@@ -108,7 +112,7 @@ describe('message service @smoke', () => {
 
     const response = await message.delete(id)
 
-    expect(response.status).toBe(403)
+    expect(response.status).toBe(expectedStatus('authz.forbidden'))
   })
 
   itWhenSupported('defects.documented').fails(

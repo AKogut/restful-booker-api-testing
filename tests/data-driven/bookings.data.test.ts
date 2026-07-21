@@ -9,6 +9,7 @@ import { validationMessages } from '@support/validation'
 import bookingCases from '../data/booking-cases.json'
 import { supports } from '@profiles/target-profile'
 import { sharedToken } from '../support/session'
+import { CreatedResources } from '@support/created-resources'
 
 interface BookingCase {
   name: string
@@ -23,7 +24,7 @@ const cases = bookingCases as BookingCase[]
 
 let token: string
 let testRoom: Room
-const createdBookingIds = new Set<number>()
+const createdBookingIds = new CreatedResources('booking')
 
 const buildPayload = (testCase: BookingCase): BookingPayload => {
   const payload = bookingPayload(testRoom.roomid, testCase.overrides ?? {})
@@ -46,7 +47,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  for (const bookingid of createdBookingIds) {
+  for (const bookingid of createdBookingIds.all()) {
     await booking.delete(bookingid, token)
   }
   await room.delete(testRoom.roomid, token)

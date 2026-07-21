@@ -10,12 +10,12 @@ export class MessageService {
     return this.client.request(RequestBuilder.post('').withBody(payload).build())
   }
 
-  async list(): Promise<ApiResponse<MessageList>> {
-    return this.client.request(RequestBuilder.get('').build())
+  async list(token?: string): Promise<ApiResponse<MessageList>> {
+    return this.client.request(RequestBuilder.get('').withToken(token).build())
   }
 
-  async getById(messageid: number): Promise<ApiResponse<Message>> {
-    return this.client.request(RequestBuilder.get(`/${messageid}`).build())
+  async getById(messageid: number, token?: string): Promise<ApiResponse<Message>> {
+    return this.client.request(RequestBuilder.get(`/${messageid}`).withToken(token).build())
   }
 
   async unreadCount(token?: string): Promise<ApiResponse<UnreadCount>> {

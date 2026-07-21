@@ -8,12 +8,13 @@ import { provisionRoom } from '@support/rooms'
 import { expectedStatus, supports } from '@profiles/target-profile'
 import { itWhenSupported } from '../support/target'
 import { sharedToken } from '../support/session'
+import { CreatedResources } from '@support/created-resources'
 
 const { booking, room } = createServices()
 
 let token: string
 let testRoom: Room
-const createdBookingIds = new Set<number>()
+const createdBookingIds = new CreatedResources('booking')
 
 const createBooking = async (payload: BookingPayload): Promise<Booking> => {
   const response = await booking.create(payload)
@@ -31,7 +32,7 @@ beforeAll(async () => {
 })
 
 afterAll(async () => {
-  for (const bookingid of createdBookingIds) {
+  for (const bookingid of createdBookingIds.all()) {
     await booking.delete(bookingid, token)
   }
   await room.delete(testRoom.roomid, token)
@@ -136,7 +137,7 @@ describe('booking service @smoke', () => {
     const created = await createBooking(bookingPayload(testRoom.roomid))
 
     const deletion = await booking.delete(created.bookingid, token)
-    createdBookingIds.delete(created.bookingid)
+    createdBookingIds.forget(created.bookingid)
 
     expect(deletion.status).toBe(202)
 

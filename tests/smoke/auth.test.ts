@@ -48,7 +48,7 @@ describe('auth service @smoke', () => {
   it('rejects a malformed token', async () => {
     const response = await auth.validate('malformed-token')
 
-    expect(response.status).toBe(403)
+    expect(response.status).toBe(expectedStatus('auth.tokenInvalid'))
     if (supports('auth.describesOutcome')) {
       expect(response.data).toEqual({ error: 'Invalid token' })
     }
@@ -73,7 +73,7 @@ describe('auth service @smoke', () => {
 
       const response = await auth.validate(token)
 
-      expect(response.status).toBe(403)
+      expect(response.status).toBe(expectedStatus('auth.tokenInvalid'))
     },
   )
 })

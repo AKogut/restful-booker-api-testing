@@ -31,6 +31,10 @@ tests/                     specifications only
   smoke/                   behavioural happy paths + key negatives
   contract/                schema, drift and cross-service consistency
   negative/                auth, authorization, boundary, malformed
+  data-driven/             JSON-dataset driven room and booking matrices
+  property/                fast-check property-based suites
+  data/                    external test-case datasets
+  support/                 target gating and shared-token helpers
 
 src/
   config/                  env parsing + validation → typed AppConfig
@@ -41,7 +45,8 @@ src/
   models/                  TypeScript domain types
   health/                  cross-service /actuator/health gate
   factories/               faker-based test data builders
-  support/                 session and provisioning helpers
+  support/                 session, provisioning, adapters and the run registry
+  profiles/                per-target expectations (live vs local)
 ```
 
 ### Request flow
@@ -147,7 +152,7 @@ Verified by deliberately running a suite that provisions a room and never cleans
 
 The platform is a shared public demo, so suites never assume ownership of seed data:
 
-- `provisionRoom()` creates a dedicated room per run, avoiding date collisions with other users' bookings.
+- `provisionRoom()` creates a dedicated room **per suite**, so no two suites book into the same date space.
 - The booking factory hands out non-overlapping weekly windows by construction.
 - Every suite tracks the ids it created and removes them in teardown.
 - Assertions avoid globally shared counters (for example, message read state is verified per message rather than via the global unread count).
