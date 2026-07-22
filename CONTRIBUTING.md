@@ -48,6 +48,18 @@ Types: `feat`, `fix`, `test`, `ci`, `docs`, `chore`, `refactor`, `perf`, `build`
 - All status checks (typecheck, lint, tests) must pass.
 - Squash merge only; delete the branch after merge.
 
+### Write the description from the diff
+
+Every "this PR fixes X" claim must map to a hunk in `git diff`. Read the diff before writing the description, not the plan you started from — the two drift apart, and a description that overstates the change defeats the review it is asking for.
+
+A file appearing in the diff is **not** evidence that a claim about it is true. It may have been touched for an unrelated reason. Check the specific lines.
+
+If a merged PR turns out to have claimed something it did not do, append a correction to its description rather than editing the original text away. The record is more useful than the appearance of a clean history.
+
+### Report gate results by exit code
+
+`npm run lint`, `typecheck` and `format:check` are green only when they **exit 0**. Reading the tail of their output is not a check — a failing run can print nothing at the end. When a test count changes, reconcile the delta arithmetically and state the reason; an unexplained change in passed or skipped counts is a signal, not noise.
+
 ## Workflow
 
 ```bash
