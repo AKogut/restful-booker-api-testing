@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto'
 import axios, { AxiosError, type AxiosInstance, type Method } from 'axios'
 import { ApiError } from './api-error'
-import { consoleExchangeLogger, redact, redactPayload, type ExchangeLogger } from './request-logger'
+import { defaultExchangeLogger, redact, redactPayload, type ExchangeLogger } from './request-logger'
 import {
   backoffDelay,
   isIdempotent,
@@ -56,7 +56,7 @@ export class HttpClient {
   private readonly meta = new WeakMap<object, ExchangeMeta>()
 
   constructor(options: HttpClientOptions) {
-    this.logger = options.logger ?? consoleExchangeLogger
+    this.logger = options.logger ?? defaultExchangeLogger
     this.retry = options.retry ?? NO_RETRY
     this.baseUrl = options.baseUrl
     this.transport = axios.create({

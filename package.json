@@ -36,7 +36,8 @@
     "lint:fix": "eslint . --fix",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
-    "prepare": "husky"
+    "prepare": "husky",
+    "diagnose:exchanges": "tsx scripts/summarize-exchanges.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.0",

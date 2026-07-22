@@ -22,7 +22,7 @@ The infrastructure-header leak, [BUG-010](bug-reports/BUG-010-infrastructure-hea
 3. Uploads the HTML, Markdown and JSON reports as the `zap-baseline-report` artifact.
 4. Fails the run only on **FAIL-level** alerts; warnings are recorded in the artifact but do not break the build.
 
-It runs **weekly** (Mondays 04:00 UTC) and on demand via `workflow_dispatch`. It is deliberately not a pull-request gate: the scan is slow and, like every dockerized-target job, the container stack is a different version from live (see [target-differences.md](target-differences.md)), so it is a monitoring signal rather than a merge blocker.
+It runs **daily** (04:00 UTC, an hour after the nightly report) and on demand via `workflow_dispatch`. It is deliberately not a pull-request gate: the scan is slow and, like every dockerized-target job, the container stack is a different version from live (see [target-differences.md](target-differences.md)), so it is a monitoring signal rather than a merge blocker.
 
 ## Triage
 
