@@ -10,7 +10,7 @@ import { validationMessages } from '@support/validation'
 import { provisionRoom } from '@support/rooms'
 import { sharedToken } from '../support/session'
 import { CreatedResources } from '@support/created-resources'
-import { itWhenSupported } from '../support/target'
+import { guardsDefect } from '../support/defect-guard'
 import { createdBooking } from '@support/bookings'
 
 const { room, booking } = createServicesWithoutRetry()
@@ -65,18 +65,15 @@ describe('booking boundary @negative', () => {
     }
   })
 
-  itWhenSupported('defects.documented').fails(
-    'rejects a booking for a non-existent room (known RBP defect: creates an orphan)',
-    async () => {
-      const response = await booking.create(bookingPayload(999_999))
+  guardsDefect('BUG-005', 'rejects a booking for a non-existent room', async () => {
+    const response = await booking.create(bookingPayload(999_999))
 
-      const created = createdBooking(response.data)
-      if (created !== undefined) {
-        createdBookingIds.add(created.bookingid)
-      }
-      expect(response.status).toBe(404)
-    },
-  )
+    const created = createdBooking(response.data)
+    if (created !== undefined) {
+      createdBookingIds.add(created.bookingid)
+    }
+    expect(response.status).toBe(404)
+  })
 })
 
 describe('room boundary @negative', () => {

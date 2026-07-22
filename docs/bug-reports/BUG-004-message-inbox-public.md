@@ -1,14 +1,14 @@
 # BUG-004: Message inbox is readable without authentication
 
-| Field         | Value                                                                                    |
-| ------------- | ---------------------------------------------------------------------------------------- |
-| Severity      | Major (broken authorization / PII exposure)                                              |
-| Priority      | High                                                                                     |
-| Status        | Open                                                                                     |
-| Service       | message                                                                                  |
-| Endpoint      | `GET /api/message`, `GET /api/message/{messageid}`                                       |
-| Environment   | https://automationintesting.online (live), 2026-07-17                                    |
-| Covering test | `tests/smoke/messages.test.ts` → `it.fails('protects the inbox from anonymous reads …')` |
+| Field         | Value                                                                                                 |
+| ------------- | ----------------------------------------------------------------------------------------------------- |
+| Severity      | Major (broken authorization / PII exposure)                                                           |
+| Priority      | High                                                                                                  |
+| Status        | Open                                                                                                  |
+| Service       | message                                                                                               |
+| Endpoint      | `GET /api/message`, `GET /api/message/{messageid}`                                                    |
+| Environment   | https://automationintesting.online (live), 2026-07-17                                                 |
+| Covering test | `tests/smoke/messages.test.ts` → `guardsDefect('BUG-004', 'protects the inbox from anonymous reads')` |
 
 ## Summary
 
@@ -38,4 +38,4 @@ Unauthenticated disclosure of personal data (names, emails, phone numbers). Maps
 
 ## Notes
 
-Guarded by an `it.fails` test — the suite will flag the moment the defect is fixed so the marker can be removed.
+Guarded by a `guardsDefect` test — the suite will flag the moment the defect is fixed so the marker can be removed.

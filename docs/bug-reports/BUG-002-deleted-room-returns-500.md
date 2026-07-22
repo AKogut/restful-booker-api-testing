@@ -1,14 +1,14 @@
 # BUG-002: Fetching a deleted room returns 500 instead of 404
 
-| Field         | Value                                                                        |
-| ------------- | ---------------------------------------------------------------------------- |
-| Severity      | Minor                                                                        |
-| Priority      | Medium                                                                       |
-| Status        | Open                                                                         |
-| Service       | room                                                                         |
-| Endpoint      | `GET /api/room/{roomid}`                                                     |
-| Environment   | https://automationintesting.online (live), 2026-07-16                        |
-| Covering test | `tests/smoke/rooms.test.ts` → `it.fails('returns 404 for a deleted room …')` |
+| Field         | Value                                                                                     |
+| ------------- | ----------------------------------------------------------------------------------------- |
+| Severity      | Minor                                                                                     |
+| Priority      | Medium                                                                                    |
+| Status        | Open                                                                                      |
+| Service       | room                                                                                      |
+| Endpoint      | `GET /api/room/{roomid}`                                                                  |
+| Environment   | https://automationintesting.online (live), 2026-07-16                                     |
+| Covering test | `tests/smoke/rooms.test.ts` → `guardsDefect('BUG-002', 'returns 404 for a deleted room')` |
 
 ## Summary
 
@@ -48,4 +48,4 @@ Authorization failures are inconsistent across the same service: `POST /api/room
 
 ## Notes
 
-Guarded by an `it.fails` test — the suite will flag the moment the defect is fixed so the marker can be removed.
+Guarded by a `guardsDefect` test — the suite will flag the moment the defect is fixed so the marker can be removed.

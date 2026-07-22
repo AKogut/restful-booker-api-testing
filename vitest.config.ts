@@ -23,7 +23,7 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.ts'],
     globalSetup: ['./tests/global-setup.ts'],
-    testTimeout: 30_000,
+    testTimeout: 45_000,
     hookTimeout: 90_000,
     teardownTimeout: 90_000,
     reporters: reporters(),

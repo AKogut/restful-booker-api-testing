@@ -1,14 +1,14 @@
 # BUG-008: Booking summary accepts any non-empty token
 
-| Field         | Value                                                                                  |
-| ------------- | -------------------------------------------------------------------------------------- |
-| Severity      | Major                                                                                  |
-| Priority      | High                                                                                   |
-| Status        | Open                                                                                   |
-| Service       | booking                                                                                |
-| Endpoint      | `GET /api/booking/summary?roomid={id}`                                                 |
-| Environment   | https://automationintesting.online (live), 2026-07-20                                  |
-| Covering test | `tests/negative/authorization.test.ts` → `it.fails('rejects booking.summary … token')` |
+| Field         | Value                                                                                                                   |
+| ------------- | ----------------------------------------------------------------------------------------------------------------------- |
+| Severity      | Major                                                                                                                   |
+| Priority      | High                                                                                                                    |
+| Status        | Open                                                                                                                    |
+| Service       | booking                                                                                                                 |
+| Endpoint      | `GET /api/booking/summary?roomid={id}`                                                                                  |
+| Environment   | https://automationintesting.online (live), 2026-07-20                                                                   |
+| Covering test | `tests/negative/authorization.test.ts` → `guardsDefect('BUG-008', 'rejects booking.summary carrying an invalid token')` |
 
 ## Summary
 
@@ -75,4 +75,4 @@ Found by probing every protected endpoint with an invalid token while reproducin
 
 ## Notes
 
-Guarded by an `it.fails` test asserting `401`. The suite passes while the defect exists and flags the moment the platform is fixed.
+Guarded by a `guardsDefect` test asserting `401`. The suite passes while the defect exists and flags the moment the platform is fixed.

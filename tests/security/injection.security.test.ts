@@ -5,10 +5,16 @@ import { getConfig } from '@config/app-config'
 import { expectedStatus } from '@profiles/target-profile'
 import { createServicesWithoutRetry } from '@services/service-factory'
 import { CreatedResources } from '@support/created-resources'
-import { itWhenSupported } from '../support/target'
+import { guardsDefect } from '../support/defect-guard'
 import { sharedToken } from '../support/session'
 
-const { auth, room } = createServicesWithoutRetry(getConfig())
+const config = getConfig()
+const { auth, room } = createServicesWithoutRetry(config)
+
+const PATIENT_CLIENT_TIMEOUT_MS = 60_000
+const PATIENT_TIMEOUT_MS = 70_000
+
+const patient = createServicesWithoutRetry({ ...config, timeoutMs: PATIENT_CLIENT_TIMEOUT_MS })
 
 const asPayload = (value: Record<string, unknown>): RoomPayload => value as unknown as RoomPayload
 
@@ -103,10 +109,11 @@ describe('input type validation @security', () => {
 })
 
 describe('oversized input @security', () => {
-  itWhenSupported('defects.documented').fails(
-    'rejects an oversized description cleanly instead of crashing (BUG-012)',
+  guardsDefect(
+    'BUG-012',
+    'rejects an oversized description cleanly instead of crashing',
     async () => {
-      const response = await room.create(
+      const response = await patient.room.create(
         asPayload({ ...roomPayload(), description: 'A'.repeat(5000) }),
         token,
       )
@@ -114,5 +121,6 @@ describe('oversized input @security', () => {
       expect(response.status).toBeGreaterThanOrEqual(400)
       expect(response.status).toBeLessThan(500)
     },
+    PATIENT_TIMEOUT_MS,
   )
 })

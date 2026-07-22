@@ -1,14 +1,14 @@
 # BUG-010: Responses leak infrastructure details in headers
 
-| Field         | Value                                                                                     |
-| ------------- | ----------------------------------------------------------------------------------------- |
-| Severity      | Minor                                                                                     |
-| Priority      | Low                                                                                       |
-| Status        | Open                                                                                      |
-| Service       | all                                                                                       |
-| Endpoint      | every `/api/*` response                                                                   |
-| Environment   | https://automationintesting.online (live), 2026-07-21                                     |
-| Covering test | `tests/security/token-hardening.security.test.ts` → `it.fails('does not leak … headers')` |
+| Field         | Value                                                                                                       |
+| ------------- | ----------------------------------------------------------------------------------------------------------- |
+| Severity      | Minor                                                                                                       |
+| Priority      | Low                                                                                                         |
+| Status        | Open                                                                                                        |
+| Service       | all                                                                                                         |
+| Endpoint      | every `/api/*` response                                                                                     |
+| Environment   | https://automationintesting.online (live), 2026-07-21                                                       |
+| Covering test | `tests/security/token-hardening.security.test.ts` → `guardsDefect('BUG-010', 'does not leak the … header')` |
 
 ## Summary
 
@@ -46,4 +46,4 @@ Severity **Minor**: no data or credential is exposed and no single header is exp
 
 ## Notes
 
-Guarded by an `it.fails` test asserting the headers are absent. The suite passes while the defect exists and flags the moment the platform stops emitting them.
+Guarded by a `guardsDefect` test asserting the headers are absent. The suite passes while the defect exists and flags the moment the platform stops emitting them.

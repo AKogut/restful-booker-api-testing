@@ -6,7 +6,7 @@ import { bookingPayload } from '@factories/booking-factory'
 import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
 import { expectedStatus, supports } from '@profiles/target-profile'
-import { itWhenSupported } from '../support/target'
+import { guardsDefect } from '../support/defect-guard'
 import { sharedToken } from '../support/session'
 import { CreatedResources } from '@support/created-resources'
 
@@ -162,21 +162,18 @@ describe('booking service @smoke', () => {
     expect(response.status).toBe(expectedStatus('authz.forbidden'))
   })
 
-  itWhenSupported('defects.documented').fails(
-    'returns clean validation errors on update (known RBP defect: leaks internals)',
-    async () => {
-      const created = await createBooking(bookingPayload(testRoom.roomid))
-      const { email: _email, phone: _phone, ...base } = bookingPayload(testRoom.roomid)
+  guardsDefect('BUG-003', 'returns clean validation errors on update', async () => {
+    const created = await createBooking(bookingPayload(testRoom.roomid))
+    const { email: _email, phone: _phone, ...base } = bookingPayload(testRoom.roomid)
 
-      const response = await booking.update(created.bookingid, { ...base, firstname: 'X' }, token)
+    const response = await booking.update(created.bookingid, { ...base, firstname: 'X' }, token)
 
-      expect(response.status).toBe(400)
-      const body = response.data
-      if (typeof body !== 'object' || body === null || !('errorMessage' in body)) {
-        throw new Error('Expected a validation error body')
-      }
-      expect(body.errorMessage).not.toContain('org.springframework')
-      expect(body.errorMessage).not.toContain('SQLException')
-    },
-  )
+    expect(response.status).toBe(400)
+    const body = response.data
+    if (typeof body !== 'object' || body === null || !('errorMessage' in body)) {
+      throw new Error('Expected a validation error body')
+    }
+    expect(body.errorMessage).not.toContain('org.springframework')
+    expect(body.errorMessage).not.toContain('SQLException')
+  })
 })

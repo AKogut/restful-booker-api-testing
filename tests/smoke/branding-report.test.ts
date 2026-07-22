@@ -6,7 +6,7 @@ import { createServices } from '@services/service-factory'
 import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
 import { expectedStatus } from '@profiles/target-profile'
-import { itWhenSupported } from '../support/target'
+import { guardsDefect } from '../support/defect-guard'
 import { sharedToken } from '../support/session'
 import { track } from '@support/run-registry'
 
@@ -53,16 +53,13 @@ describe('branding service @smoke', () => {
     expect(response.status).toBe(expectedStatus('authz.missingToken.report'))
   })
 
-  itWhenSupported('defects.documented').fails(
-    'accepts its own payload back on update (known RBP defect: relative logoUrl fails @URL)',
-    async () => {
-      const current = await branding.get()
+  guardsDefect('BUG-006', 'accepts its own payload back on update', async () => {
+    const current = await branding.get()
 
-      const response = await branding.update(current.data, token)
+    const response = await branding.update(current.data, token)
 
-      expect(response.status).toBe(202)
-    },
-  )
+    expect(response.status).toBe(202)
+  })
 })
 
 describe('report service @smoke', () => {

@@ -1,14 +1,14 @@
 # BUG-007: An invalid token returns 500 instead of 401
 
-| Field         | Value                                                                          |
-| ------------- | ------------------------------------------------------------------------------ |
-| Severity      | Major                                                                          |
-| Priority      | High                                                                           |
-| Status        | Open                                                                           |
-| Service       | room, booking                                                                  |
-| Endpoint      | `POST /api/room`, `GET /api/booking`                                           |
-| Environment   | https://automationintesting.online (live), 2026-07-20                          |
-| Covering test | `tests/negative/authorization.test.ts` → `it.fails('rejects … invalid token')` |
+| Field         | Value                                                                                                     |
+| ------------- | --------------------------------------------------------------------------------------------------------- |
+| Severity      | Major                                                                                                     |
+| Priority      | High                                                                                                      |
+| Status        | Open                                                                                                      |
+| Service       | room, booking                                                                                             |
+| Endpoint      | `POST /api/room`, `GET /api/booking`                                                                      |
+| Environment   | https://automationintesting.online (live), 2026-07-20                                                     |
+| Covering test | `tests/negative/authorization.test.ts` → `guardsDefect('BUG-007', 'rejects … carrying an invalid token')` |
 
 ## Summary
 
@@ -74,4 +74,6 @@ Found while investigating a CI failure on PR #65, where `tests/smoke/rooms.test.
 
 ## Notes
 
-Guarded by `it.fails` tests asserting `401`. The suite passes while the defect exists and flags the moment the platform is fixed.
+Guarded by `guardsDefect` tests asserting `401`. The suite passes while the defect exists and flags the moment the platform is fixed.
+
+This guard is the one that absorbed a hung `POST /room` during the #67 investigation: under the previous `it.fails` idiom the timeout satisfied the inverted outcome and the run stayed green. Under `guardsDefect` a transport failure fails the test.

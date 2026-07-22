@@ -1,14 +1,14 @@
 # BUG-003: Booking update validation errors leak internal implementation details
 
-| Field         | Value                                                                                      |
-| ------------- | ------------------------------------------------------------------------------------------ |
-| Severity      | Major (information disclosure)                                                             |
-| Priority      | High                                                                                       |
-| Status        | Open                                                                                       |
-| Service       | booking                                                                                    |
-| Endpoint      | `PUT /api/booking/{bookingid}`                                                             |
-| Environment   | https://automationintesting.online (live), 2026-07-16                                      |
-| Covering test | `tests/smoke/bookings.test.ts` → `it.fails('returns clean validation errors on update …')` |
+| Field         | Value                                                                                                   |
+| ------------- | ------------------------------------------------------------------------------------------------------- |
+| Severity      | Major (information disclosure)                                                                          |
+| Priority      | High                                                                                                    |
+| Status        | Open                                                                                                    |
+| Service       | booking                                                                                                 |
+| Endpoint      | `PUT /api/booking/{bookingid}`                                                                          |
+| Environment   | https://automationintesting.online (live), 2026-07-16                                                   |
+| Covering test | `tests/smoke/bookings.test.ts` → `guardsDefect('BUG-003', 'returns clean validation errors on update')` |
 
 ## Summary
 
@@ -50,4 +50,4 @@ The same internal leak occurs on `PUT /api/branding` when the payload fails vali
 
 ## Notes
 
-Guarded by an `it.fails` test — the suite will flag the moment the defect is fixed so the marker can be removed.
+Guarded by a `guardsDefect` test — the suite will flag the moment the defect is fixed so the marker can be removed.

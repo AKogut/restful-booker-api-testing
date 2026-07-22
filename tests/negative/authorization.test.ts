@@ -5,6 +5,7 @@ import type { Branding } from '@models/branding'
 import { getConfig } from '@config/app-config'
 import { expectedStatus, supports, type StatusKey } from '@profiles/target-profile'
 import { createServicesWithoutRetry } from '@services/service-factory'
+import { guardsDefect } from '../support/defect-guard'
 import { itWhenSupported } from '../support/target'
 
 const config = getConfig()
@@ -89,17 +90,22 @@ describe('invalid token handling @negative', () => {
     expect(response.status).toBe(expectedStatus('authz.forbidden'))
   })
 
-  itWhenSupported('defects.documented').fails.each<[string, () => Promise<{ status: number }>]>([
+  const invalidTokenCalls: [string, () => Promise<{ status: number }>][] = [
     ['room.create', () => room.create(roomPayload(), INVALID_TOKEN)],
     ['booking.list', () => booking.list(ANY_ID, INVALID_TOKEN)],
-  ])('rejects %s carrying an invalid token instead of failing (BUG-007)', async (_name, call) => {
-    const response = await call()
+  ]
 
-    expect(response.status).toBe(401)
-  })
+  for (const [endpoint, call] of invalidTokenCalls) {
+    guardsDefect('BUG-007', `rejects ${endpoint} carrying an invalid token`, async () => {
+      const response = await call()
 
-  itWhenSupported('defects.documented').fails(
-    'rejects report.get carrying an invalid token instead of stalling (BUG-009)',
+      expect(response.status).toBe(401)
+    })
+  }
+
+  guardsDefect(
+    'BUG-009',
+    'rejects report.get carrying an invalid token instead of stalling',
     async () => {
       const response = await patient.report.get(INVALID_TOKEN)
 
@@ -108,12 +114,9 @@ describe('invalid token handling @negative', () => {
     PATIENT_TIMEOUT_MS,
   )
 
-  itWhenSupported('defects.documented').fails(
-    'rejects booking.summary carrying an invalid token (BUG-008)',
-    async () => {
-      const response = await booking.summary(ANY_ID, INVALID_TOKEN)
+  guardsDefect('BUG-008', 'rejects booking.summary carrying an invalid token', async () => {
+    const response = await booking.summary(ANY_ID, INVALID_TOKEN)
 
-      expect(response.status).toBe(401)
-    },
-  )
+    expect(response.status).toBe(401)
+  })
 })
