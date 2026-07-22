@@ -94,23 +94,63 @@ npm test
 
 ## Scripts
 
-| Script                  | Purpose                                     |
-| ----------------------- | ------------------------------------------- |
-| `npm test`              | Run the full suite                          |
-| `npm run test:smoke`    | Fast smoke suite                            |
-| `npm run test:unit`     | Hermetic unit tests                         |
-| `npm run test:live`     | All six live suites against the platform    |
-| `npm run coverage`      | Full suite with enforced thresholds         |
-| `npm run test:local`    | Live suites against the Docker stack        |
-| `npm run docker:up`     | Start the local RBP stack                   |
-| `npm run docker:down`   | Stop it and drop volumes                    |
-| `npm run test:contract` | Schema, drift & cross-service checks        |
-| `npm run test:security` | OWASP-oriented authorization & token checks |
-| `npm run test:pact`     | Generate the consumer pacts (no platform)   |
-| `npm run pact:verify`   | Verify providers against the pacts          |
-| `npm run typecheck`     | TypeScript type checking                    |
-| `npm run lint`          | ESLint                                      |
-| `npm run format`        | Prettier                                    |
+**Running tests**
+
+| Script                     | Purpose                                                  |
+| -------------------------- | -------------------------------------------------------- |
+| `npm test`                 | Everything — unit, pact and every live suite             |
+| `npm run test:unit`        | Hermetic framework tests, no network                     |
+| `npm run test:live`        | All six live suites against the platform                 |
+| `npm run test:local`       | The same suites against the Docker stack, sequentially   |
+| `npm run test:smoke`       | Behavioural happy paths per service                      |
+| `npm run test:contract`    | Schema, drift and cross-service checks                   |
+| `npm run test:negative`    | Credentials, authorization matrix, boundary, malformed   |
+| `npm run test:data-driven` | Room and booking matrices from external JSON datasets    |
+| `npm run test:property`    | fast-check properties, including double-booking          |
+| `npm run test:security`    | OWASP-oriented authorization, token and injection checks |
+| `npm run test:watch`       | Watch mode                                               |
+| `npm run coverage`         | Everything, with thresholds enforced                     |
+| `npm run coverage:local`   | The same against the Docker stack                        |
+
+**Consumer contracts** ([details](docs/contract-testing.md))
+
+| Script                      | Purpose                                                    |
+| --------------------------- | ---------------------------------------------------------- |
+| `npm run test:pact`         | Generate the pacts — hermetic, nothing needs to be running |
+| `npm run pact:broker:up`    | Start the ephemeral broker and its database                |
+| `npm run pact:publish`      | Publish the pacts, versioned by git sha and branch         |
+| `npm run pact:verify`       | Replay every pact against the running providers            |
+| `npm run pact:can-i-deploy` | Refuse to proceed unless every result is present and green |
+| `npm run pact:broker:down`  | Stop the broker and drop its volume                        |
+
+**The dockerized platform**
+
+| Script                | Purpose                    |
+| --------------------- | -------------------------- |
+| `npm run docker:up`   | Start the six RBP services |
+| `npm run docker:down` | Stop them and drop volumes |
+| `npm run docker:ps`   | Show container state       |
+| `npm run docker:logs` | Follow the container logs  |
+
+**Reporting and diagnostics**
+
+| Script                       | Purpose                                                                                                               |
+| ---------------------------- | --------------------------------------------------------------------------------------------------------------------- |
+| `npm run test:report`        | Full suite with Allure results                                                                                        |
+| `npm run allure:generate`    | Render the Allure HTML report                                                                                         |
+| `npm run allure:open`        | Open it locally                                                                                                       |
+| `npm run diagnose:exchanges` | Summarise an `HTTP_LOG_FILE` exchange log — see [#67](https://github.com/AKogut/restful-booker-api-testing/issues/67) |
+| `npm run schema:export`      | Render the Zod schemas to JSON Schema under `schemas/`                                                                |
+
+**Quality gates**
+
+| Script                 | Purpose                             |
+| ---------------------- | ----------------------------------- |
+| `npm run typecheck`    | TypeScript, `strict`                |
+| `npm run lint`         | ESLint                              |
+| `npm run lint:fix`     | ESLint with autofix                 |
+| `npm run format`       | Prettier, write                     |
+| `npm run format:check` | Prettier, check only — CI uses this |
 
 ## Contracts
 
@@ -264,6 +304,7 @@ Twelve confirmed platform defects, each with reproduction steps, evidence and a 
 - [Architecture](docs/architecture.md) — layering, request flow, run lifecycle, retries
 - [Test Strategy](docs/test-strategy.md) — scope, risk prioritisation, suite taxonomy, CI strategy
 - [Target Differences](docs/target-differences.md) — live vs local, and why they are not the same API
+- [Contract Testing](docs/contract-testing.md) — Pact consumer contracts, provider verification, and who the consumer is
 - [Security Scan](docs/security-scan.md) — OWASP ZAP baseline in CI, and how it complements the security suite
 - [Bug Reports](docs/bug-reports/) — twelve defects with evidence and guarding tests
 

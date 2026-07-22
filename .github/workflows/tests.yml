@@ -16,6 +16,7 @@ on:
           - data-driven
           - property
           - security
+          - pact
           - live
 
 jobs:
@@ -41,6 +42,7 @@ jobs:
             data-driven) npm run test:data-driven ;;
             property) npm run test:property ;;
             security) npm run test:security ;;
+            pact) npm run test:pact ;;
             live) npm run test:live ;;
             *) echo "Unknown suite: ${{ inputs.suite }}" && exit 1 ;;
           esac

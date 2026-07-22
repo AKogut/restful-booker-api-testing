@@ -1,0 +1,52 @@
+version: 2
+
+updates:
+  - package-ecosystem: npm
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: 'chore'
+      include: scope
+    groups:
+      dev-tooling:
+        patterns:
+          - '@commitlint/*'
+          - '@eslint/*'
+          - 'eslint*'
+          - 'prettier*'
+          - 'husky'
+          - 'lint-staged'
+          - 'typescript*'
+        update-types:
+          - minor
+          - patch
+      test-tooling:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
+          - 'allure*'
+          - 'fast-check'
+          - '@faker-js/*'
+          - '@pact-foundation/*'
+        update-types:
+          - minor
+          - patch
+
+  - package-ecosystem: github-actions
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: 'ci'
+
+  - package-ecosystem: docker
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    commit-message:
+      prefix: 'ci'

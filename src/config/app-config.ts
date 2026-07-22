@@ -77,7 +77,3 @@ export const getConfig = (): AppConfig => {
   }
   return cached
 }
-
-export const resetConfig = (): void => {
-  cached = undefined
-}

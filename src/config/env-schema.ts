@@ -19,5 +19,3 @@ export const envSchema = z.object({
   READINESS_TIMEOUT_MS: z.coerce.number().int().nonnegative().default(90_000),
   READINESS_INTERVAL_MS: z.coerce.number().int().positive().default(3_000),
 })
-
-export type Env = z.infer<typeof envSchema>
