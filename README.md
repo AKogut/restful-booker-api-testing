@@ -213,24 +213,23 @@ it('a booking created via BookingService is reflected in the room report', async
 
 ### Guarding a known defect
 
-A platform bug is encoded as the behaviour that _should_ happen, marked `it.fails`. The suite stays green while the defect exists and turns red the moment it is fixed:
+A platform bug is encoded as the behaviour that _should_ happen. The suite stays green while the defect exists and turns red the moment it is fixed:
 
 ```ts
-itWhenSupported('defects.documented').fails(
-  'returns 404 for a deleted room (known RBP defect: responds 500)',
-  async () => {
-    const created = await createRoom(roomPayload())
-    await room.delete(created.roomid, token)
-    createdRoomIds.forget(created.roomid)
+guardsDefect('BUG-002', 'returns 404 for a deleted room', async () => {
+  const created = await createRoom(roomPayload())
+  await room.delete(created.roomid, token)
+  createdRoomIds.forget(created.roomid)
 
-    const response = await room.getById(created.roomid)
+  const response = await room.getById(created.roomid)
 
-    expect(response.status).toBe(404)
-  },
-)
+  expect(response.status).toBe(404)
+})
 ```
 
-Each guard is paired with a written report in [docs/bug-reports/](docs/bug-reports/) — twelve reports, twelve guards.
+`guardsDefect` classifies the outcome rather than inverting it: a failed assertion means the defect still reproduces, a clean pass means it is fixed (and names the report to close), and **a timeout or any other error fails the test**. Its predecessor, `it.fails`, accepted any failure at all — so a request that never completed looked exactly like a defect still present. That cost three false greens before it was replaced ([why](docs/test-strategy.md#why-not-itfails)).
+
+Each guard is paired with a written report in [docs/bug-reports/](docs/bug-reports/) — twelve reports, twelve guards, and a unit test asserting both directions of that parity.
 
 ## Defects Found
 

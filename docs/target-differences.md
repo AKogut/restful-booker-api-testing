@@ -51,7 +51,7 @@ Encoded as `supports(key)`; suites gate with `itWhenSupported(key)`.
 
 ### Why the defect guards are live-only
 
-Every report in [`bug-reports/`](bug-reports/) was found against live and describes live's behaviour. Running those guards against a different version would assert nothing meaningful — and worse, an `it.fails` that passes because _a different bug_ exists is a false green. They are scoped to the target they document.
+Every report in [`bug-reports/`](bug-reports/) was found against live and describes live's behaviour. Running those guards against a different version would assert nothing meaningful — and worse, a guard that passes because _a different bug_ exists is a false green. They are scoped to the target they document.
 
 Two of them are notably **not** reproducible locally, which is itself informative:
 

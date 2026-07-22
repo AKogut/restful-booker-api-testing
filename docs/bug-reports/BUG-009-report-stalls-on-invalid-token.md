@@ -1,14 +1,14 @@
 # BUG-009: Report stalls ~31 seconds before rejecting an invalid token
 
-| Field         | Value                                                                                |
-| ------------- | ------------------------------------------------------------------------------------ |
-| Severity      | Major                                                                                |
-| Priority      | High                                                                                 |
-| Status        | Open                                                                                 |
-| Service       | report                                                                               |
-| Endpoint      | `GET /api/report`                                                                    |
-| Environment   | https://automationintesting.online (live), 2026-07-20                                |
-| Covering test | `tests/negative/authorization.test.ts` → `it.fails('rejects report.get … stalling')` |
+| Field         | Value                                                                                                          |
+| ------------- | -------------------------------------------------------------------------------------------------------------- |
+| Severity      | Major                                                                                                          |
+| Priority      | High                                                                                                           |
+| Status        | Open                                                                                                           |
+| Service       | report                                                                                                         |
+| Endpoint      | `GET /api/report`                                                                                              |
+| Environment   | https://automationintesting.online (live), 2026-07-20                                                          |
+| Covering test | `tests/negative/authorization.test.ts` → `guardsDefect('BUG-009', 'rejects report.get … instead of stalling')` |
 
 ## Summary
 
@@ -76,4 +76,4 @@ Found while writing the guarding test for [BUG-007](BUG-007-invalid-token-return
 
 ## Notes
 
-Guarded by an `it.fails` test asserting `401`, using a client with an extended timeout so the assertion — not the transport — decides the outcome. The test costs ~31 s per run, which is the honest price of covering this defect until it is fixed.
+Guarded by a `guardsDefect` test asserting `401`, using a client with an extended timeout so the assertion — not the transport — decides the outcome. The test costs ~31 s per run, which is the honest price of covering this defect until it is fixed.

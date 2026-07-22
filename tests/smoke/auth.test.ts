@@ -3,6 +3,7 @@ import { getConfig } from '@config/app-config'
 import { expectedStatus, supports } from '@profiles/target-profile'
 import { createServices } from '@services/service-factory'
 import { adminToken, extractToken } from '@support/session'
+import { guardsDefect } from '../support/defect-guard'
 import { itWhenSupported } from '../support/target'
 
 const { auth } = createServices()
@@ -65,15 +66,12 @@ describe('auth service @smoke', () => {
     }
   })
 
-  itWhenSupported('defects.documented').fails(
-    'invalidates the token after logout (known RBP defect: token survives)',
-    async () => {
-      const token = await adminToken()
-      await auth.logout(token)
+  guardsDefect('BUG-001', 'invalidates the token after logout', async () => {
+    const token = await adminToken()
+    await auth.logout(token)
 
-      const response = await auth.validate(token)
+    const response = await auth.validate(token)
 
-      expect(response.status).toBe(expectedStatus('auth.tokenInvalid'))
-    },
-  )
+    expect(response.status).toBe(expectedStatus('auth.tokenInvalid'))
+  })
 })

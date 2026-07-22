@@ -1,14 +1,14 @@
 # BUG-005: A booking can be created for a non-existent room
 
-| Field         | Value                                                                                         |
-| ------------- | --------------------------------------------------------------------------------------------- |
-| Severity      | Major (broken referential integrity)                                                          |
-| Priority      | High                                                                                          |
-| Status        | Open                                                                                          |
-| Service       | booking                                                                                       |
-| Endpoint      | `POST /api/booking`                                                                           |
-| Environment   | https://automationintesting.online (live), 2026-07-17                                         |
-| Covering test | `tests/negative/boundary.test.ts` → `it.fails('rejects a booking for a non-existent room …')` |
+| Field         | Value                                                                                                      |
+| ------------- | ---------------------------------------------------------------------------------------------------------- |
+| Severity      | Major (broken referential integrity)                                                                       |
+| Priority      | High                                                                                                       |
+| Status        | Open                                                                                                       |
+| Service       | booking                                                                                                    |
+| Endpoint      | `POST /api/booking`                                                                                        |
+| Environment   | https://automationintesting.online (live), 2026-07-17                                                      |
+| Covering test | `tests/negative/boundary.test.ts` → `guardsDefect('BUG-005', 'rejects a booking for a non-existent room')` |
 
 ## Summary
 
@@ -44,4 +44,4 @@ The booking service accepts and persists a booking that references a `roomid` wh
 
 ## Notes
 
-Guarded by an `it.fails` test that adds the created id to teardown cleanup before asserting, so no orphan is left behind. The test flips red the moment the platform enforces the room reference.
+Guarded by a `guardsDefect` test that adds the created id to teardown cleanup before asserting, so no orphan is left behind. The test flips red the moment the platform enforces the room reference.

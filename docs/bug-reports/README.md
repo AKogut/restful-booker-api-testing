@@ -1,6 +1,6 @@
 # Bug Reports
 
-Defects found in the Restful Booker Platform while building this framework. Each report is backed by an `it.fails` test that keeps the defect visible: the suite passes while the bug exists and flags the test the moment the platform fixes it.
+Defects found in the Restful Booker Platform while building this framework. Each report is backed by a `guardsDefect` test that keeps the defect visible: the suite passes while the bug exists and flags the test the moment the platform fixes it — or the moment the request stops completing at all.
 
 | ID                                                   | Title                                                                 | Service       | Severity | Status |
 | ---------------------------------------------------- | --------------------------------------------------------------------- | ------------- | -------- | ------ |

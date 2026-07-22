@@ -1,14 +1,14 @@
 # BUG-012: Oversized string input returns 500 instead of 400
 
-| Field         | Value                                                                                      |
-| ------------- | ------------------------------------------------------------------------------------------ |
-| Severity      | Minor                                                                                      |
-| Priority      | Medium                                                                                     |
-| Status        | Open                                                                                       |
-| Service       | room                                                                                       |
-| Endpoint      | `POST /api/room`                                                                           |
-| Environment   | https://automationintesting.online (live), 2026-07-21                                      |
-| Covering test | `tests/security/injection.security.test.ts` → `it.fails('rejects an oversized … cleanly')` |
+| Field         | Value                                                                                                                 |
+| ------------- | --------------------------------------------------------------------------------------------------------------------- |
+| Severity      | Minor                                                                                                                 |
+| Priority      | Medium                                                                                                                |
+| Status        | Open                                                                                                                  |
+| Service       | room                                                                                                                  |
+| Endpoint      | `POST /api/room`                                                                                                      |
+| Environment   | https://automationintesting.online (live), 2026-07-21                                                                 |
+| Covering test | `tests/security/injection.security.test.ts` → `guardsDefect('BUG-012', 'rejects an oversized description cleanly …')` |
 
 ## Summary
 
@@ -35,6 +35,8 @@ A description over the allowed length is rejected with `400` and a validation me
 
 `200` up to ~2000 characters, then `500` between 2000 and 5000. The transition is a server error, not a validation boundary.
 
+The `500` is also **slow, and unpredictably so**. Two consecutive measurements on 2026-07-22 took **31.27 s** and **31.31 s**; a suite run minutes later got its answer in **7.16 s**. The failure path appears to retry or block internally before giving up, and how long that takes is not stable.
+
 ## Impact
 
 - **Unhandled path reachable from input.** A caller can drive a `500` with a single oversized field. Length limits should be enforced by validation, not by an exception at the persistence layer.
@@ -44,4 +46,6 @@ Severity **Minor**: no data is exposed and the room is not created; the cost is 
 
 ## Notes
 
-Guarded by an `it.fails` test asserting `400`. The suite passes while the defect exists and flags the moment over-length input is validated rather than thrown on.
+Guarded by a `guardsDefect` test asserting a clean `4xx`, using a client with an extended timeout because the `500` can take over 30 s to arrive.
+
+That timeout is not incidental — **this guard never actually observed the `500` it documents.** Under the previous `it.fails` idiom the inverted outcome was satisfied either way: a fast `500` failed the assertion, and a slow response failed the transport, and both looked identical from the outside. Converting the guard to `guardsDefect` turned it red on the very first live run (`Test timed out in 30000ms`), which is what prompted measuring the latency above. It is the third instance of the false green described in [test-strategy.md](../test-strategy.md#why-not-itfails), and the only one found by the fix rather than before it.

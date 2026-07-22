@@ -3,7 +3,7 @@ import { messagePayload } from '@factories/message-factory'
 import type { MessagePayload } from '@models/message'
 import { createServices } from '@services/service-factory'
 import { expectedStatus, supports } from '@profiles/target-profile'
-import { itWhenSupported } from '../support/target'
+import { guardsDefect } from '../support/defect-guard'
 import { sharedToken } from '../support/session'
 import { CreatedResources } from '@support/created-resources'
 
@@ -115,14 +115,11 @@ describe('message service @smoke', () => {
     expect(response.status).toBe(expectedStatus('authz.forbidden'))
   })
 
-  itWhenSupported('defects.documented').fails(
-    'protects the inbox from anonymous reads (known RBP defect: exposes PII)',
-    async () => {
-      const id = await createMessage(messagePayload())
+  guardsDefect('BUG-004', 'protects the inbox from anonymous reads', async () => {
+    const id = await createMessage(messagePayload())
 
-      const response = await message.getById(id)
+    const response = await message.getById(id)
 
-      expect(response.status).toBe(401)
-    },
-  )
+    expect(response.status).toBe(401)
+  })
 })

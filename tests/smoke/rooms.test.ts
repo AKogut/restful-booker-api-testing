@@ -3,7 +3,7 @@ import type { Room, RoomPayload } from '@models/room'
 import { expectedStatus, supports } from '@profiles/target-profile'
 import { createServices } from '@services/service-factory'
 import { roomPayload } from '@factories/room-factory'
-import { itWhenSupported } from '../support/target'
+import { guardsDefect } from '../support/defect-guard'
 import { sharedToken } from '../support/session'
 import { CreatedResources } from '@support/created-resources'
 
@@ -93,18 +93,15 @@ describe('room service @smoke', () => {
     expect(listing.data.rooms.map((entry) => entry.roomid)).not.toContain(created.roomid)
   })
 
-  itWhenSupported('defects.documented').fails(
-    'returns 404 for a deleted room (known RBP defect: responds 500)',
-    async () => {
-      const created = await createRoom(roomPayload())
-      await room.delete(created.roomid, token)
-      createdRoomIds.forget(created.roomid)
+  guardsDefect('BUG-002', 'returns 404 for a deleted room', async () => {
+    const created = await createRoom(roomPayload())
+    await room.delete(created.roomid, token)
+    createdRoomIds.forget(created.roomid)
 
-      const response = await room.getById(created.roomid)
+    const response = await room.getById(created.roomid)
 
-      expect(response.status).toBe(404)
-    },
-  )
+    expect(response.status).toBe(404)
+  })
 
   it('rejects room creation without a token', async () => {
     const response = await room.create(roomPayload())

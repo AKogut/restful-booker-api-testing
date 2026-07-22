@@ -1,14 +1,14 @@
 # BUG-011: API responses carry no standard security headers
 
-| Field         | Value                                                                                         |
-| ------------- | --------------------------------------------------------------------------------------------- |
-| Severity      | Minor                                                                                         |
-| Priority      | Low                                                                                           |
-| Status        | Open                                                                                          |
-| Service       | all                                                                                           |
-| Endpoint      | every `/api/*` response                                                                       |
-| Environment   | https://automationintesting.online (live), 2026-07-21                                         |
-| Covering test | `tests/security/token-hardening.security.test.ts` → `it.fails('sets the standard … headers')` |
+| Field         | Value                                                                                                       |
+| ------------- | ----------------------------------------------------------------------------------------------------------- |
+| Severity      | Minor                                                                                                       |
+| Priority      | Low                                                                                                         |
+| Status        | Open                                                                                                        |
+| Service       | all                                                                                                         |
+| Endpoint      | every `/api/*` response                                                                                     |
+| Environment   | https://automationintesting.online (live), 2026-07-21                                                       |
+| Covering test | `tests/security/token-hardening.security.test.ts` → `guardsDefect('BUG-011', 'sets the … security header')` |
 
 ## Summary
 
@@ -44,4 +44,4 @@ Severity **Minor**: the practical exposure for a JSON API consumed by non-browse
 
 ## Notes
 
-Because the headers are a deployment concern, this is asserted only against the `live` target. Guarded by an `it.fails` test; the suite flags the moment the headers appear.
+Because the headers are a deployment concern, this is asserted only against the `live` target. Guarded by a `guardsDefect` test; the suite flags the moment the headers appear.

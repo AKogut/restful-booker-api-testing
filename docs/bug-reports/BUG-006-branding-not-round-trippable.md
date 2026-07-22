@@ -1,14 +1,14 @@
 # BUG-006: Branding cannot be round-tripped — GET returns a logoUrl that PUT rejects
 
-| Field         | Value                                                                                          |
-| ------------- | ---------------------------------------------------------------------------------------------- |
-| Severity      | Minor                                                                                          |
-| Priority      | Medium                                                                                         |
-| Status        | Open                                                                                           |
-| Service       | branding                                                                                       |
-| Endpoint      | `GET /api/branding`, `PUT /api/branding`                                                       |
-| Environment   | https://automationintesting.online (live), 2026-07-17                                          |
-| Covering test | `tests/smoke/branding-report.test.ts` → `it.fails('accepts its own payload back on update …')` |
+| Field         | Value                                                                                                       |
+| ------------- | ----------------------------------------------------------------------------------------------------------- |
+| Severity      | Minor                                                                                                       |
+| Priority      | Medium                                                                                                      |
+| Status        | Open                                                                                                        |
+| Service       | branding                                                                                                    |
+| Endpoint      | `GET /api/branding`, `PUT /api/branding`                                                                    |
+| Environment   | https://automationintesting.online (live), 2026-07-17                                                       |
+| Covering test | `tests/smoke/branding-report.test.ts` → `guardsDefect('BUG-006', 'accepts its own payload back on update')` |
 
 ## Summary
 
@@ -40,4 +40,4 @@ codes [URL.branding.logoUrl, URL.logoUrl, URL.java.lang.String, URL]
 
 ## Notes
 
-Guarded by an `it.fails` test. The attempt is rejected with `400`, so no branding state on the shared demo instance is mutated by the test.
+Guarded by a `guardsDefect` test. The attempt is rejected with `400`, so no branding state on the shared demo instance is mutated by the test.

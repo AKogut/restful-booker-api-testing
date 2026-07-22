@@ -43,18 +43,48 @@ Verify the Restful Booker Platform API — six independent Spring Boot services 
 
 **Entry** — all six services report `UP` on `/actuator/health`. The `globalSetup` gate polls until they do, up to `READINESS_TIMEOUT_MS`, then aborts with the failing service and the attempt count named.
 
-**Exit** — static checks, unit tests and the full live suite with coverage thresholds all pass. Known platform defects are represented by `it.fails` tests, so the suite is green while a defect exists and turns red the moment it is fixed.
+**Exit** — static checks, unit tests and the full live suite with coverage thresholds all pass. Known platform defects are represented by `guardsDefect` tests, so the suite is green while a defect exists and turns red the moment it is fixed.
 
 ## Handling known defects
 
 Every confirmed platform defect gets:
 
 1. a report in [`docs/bug-reports/`](bug-reports/) with repro steps, evidence, impact and severity,
-2. an `it.fails` test that encodes the **expected correct behaviour**.
+2. a `guardsDefect` test that encodes the **expected correct behaviour**.
 
-This keeps defects visible instead of silently accommodated, and makes a platform fix surface immediately as a failing test rather than going unnoticed. Report-to-test parity is intentional: twelve reports, each guarded. Most guards are gated on `defects.documented` and run only against the target whose behaviour they document; the header findings (BUG-010, BUG-011) are deployment-specific and gated the same way.
+This keeps defects visible instead of silently accommodated, and makes a platform fix surface immediately as a failing test rather than going unnoticed. Most guards are gated on `defects.documented` and run only against the target whose behaviour they document; the header findings (BUG-010, BUG-011) are deployment-specific and gated the same way.
 
-An `it.fails` test is only as good as its failure reason. A guard that passes because the request timed out proves nothing about the defect it claims to cover, so any `it.fails` whose runtime approaches the client timeout is treated as suspect and re-examined — that is how [BUG-009](bug-reports/BUG-009-report-stalls-on-invalid-token.md) was found.
+### Why not `it.fails`
+
+The guards were originally `it.fails`. That idiom inverts the outcome, so **any** failure satisfies it — including a transport timeout. A guard written to prove "the platform still returns the wrong status" also passed when the request never completed, which is a green result that proves nothing. It happened three times: [BUG-009](bug-reports/BUG-009-report-stalls-on-invalid-token.md) was found this way, a hung `POST /room` was later absorbed by the BUG-007 guard, and switching idiom immediately exposed a third — see below.
+
+The replacement keeps the correct expectation in the test body and classifies the failure instead of inverting it:
+
+```ts
+guardsDefect('BUG-002', 'returns 404 for a deleted room', async () => {
+  const response = await room.getById(created.roomid)
+
+  expect(response.status).toBe(404)
+})
+```
+
+`observeDefect` runs the body and looks at what came out:
+
+| Outcome                      | Meaning                                        | Result                               |
+| ---------------------------- | ---------------------------------------------- | ------------------------------------ |
+| `AssertionError`             | the defect still reproduces                    | **pass**                             |
+| nothing thrown               | the expectation now holds                      | **fail** — named, with the report id |
+| `ApiError`, or anything else | the request never completed, or the test broke | **fail**                             |
+
+So a timeout is a failure, an unexpected `TypeError` is a failure, and a platform fix is a failure that says which report to close. The correct behaviour stays written down as the assertion — the property that made `it.fails` attractive — while the outcome is no longer inverted.
+
+Characterisation tests (`expect(status).toBe(500)`) were the other candidate. They fail on a timeout too, but they encode the wrong value as the expectation, and when the platform is fixed the assertion has to be rewritten rather than simply un-guarded. This approach keeps the expectation correct and still fails for the right reasons.
+
+The report id is a required, typed argument, so a guard cannot be written without naming its report — and a unit test asserts both directions of parity: every report on disk is declared, and every declared report is guarded.
+
+### Test timeout must exceed the client timeout
+
+`testTimeout` was `30_000`, the same as `TIMEOUT_MS`. A request that hit the client timeout was killed by Vitest at the same instant, so the run reported `Test timed out in 30000ms` instead of the client's `ApiError: Request timed out: <url>` — the URL, the method and the attempt count were all lost. `testTimeout` is now `45_000`, above the client budget, and the two guards that talk to slow endpoints carry their own patient client with a test timeout above _that_. This is the same ordering the hook budget already follows.
 
 ## Determinism on a shared environment
 
@@ -95,9 +125,9 @@ Against the live host: **zero** transient responses (`408/425/429/502/503/504`) 
 
 The second one matters twice over. It reproduced **locally**, so the "CI-only" framing was wrong: this is platform latency that CI meets more often, not something specific to hosted runners. And the suite still reported **259/259 green** while it happened.
 
-It could only hide in a test that treats a throw as success. Every other `room.create` call site is an ordinary test where a transport error fails the test; the one exception is the `it.fails` guard for BUG-007. **That guard passed because the request hung, not because the status was wrong** — the same false green [BUG-009](bug-reports/BUG-009-report-stalls-on-invalid-token.md) taught, in a second guard.
+It could only hide in a test that treats a throw as success. Every other `room.create` call site is an ordinary test where a transport error fails the test; the one exception was the `it.fails` guard for BUG-007. **That guard passed because the request hung, not because the status was wrong** — the same false green [BUG-009](bug-reports/BUG-009-report-stalls-on-invalid-token.md) taught, in a second guard.
 
-This is a limit of the `it.fails` idiom itself: it accepts _any_ failure, so it cannot distinguish "the defect is still present" from "the request never completed". Timing evidence is what exposes it, which is why an unexplained runtime near the client timeout is treated as suspect.
+That was a limit of the `it.fails` idiom itself: it accepted _any_ failure, so it could not distinguish "the defect is still present" from "the request never completed". Timing evidence was the only thing that exposed it. The idiom has since been [replaced](#why-not-itfails), and the first live run under the replacement immediately turned up a third instance — the BUG-012 guard, which had never once observed the `500` it claimed to document.
 
 ## Targets
 

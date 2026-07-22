@@ -3,6 +3,7 @@ import { nextRoomName, roomPayload } from '@factories/room-factory'
 import { getConfig } from '@config/app-config'
 import { createServicesWithoutRetry } from '@services/service-factory'
 import { sweepRoomsByPrefix } from '../support/room-sweep'
+import { guardsDefect } from '../support/defect-guard'
 import { itWhenSupported } from '../support/target'
 import { sharedToken } from '../support/session'
 
@@ -76,21 +77,19 @@ describe('secret non-leakage @security', () => {
 })
 
 describe('response header hygiene @security', () => {
-  itWhenSupported('defects.documented').fails.each(INFRA_HEADERS)(
-    'does not leak the %s header (BUG-010)',
-    async (header) => {
+  for (const header of INFRA_HEADERS) {
+    guardsDefect('BUG-010', `does not leak the ${header} header`, async () => {
       const response = await room.list()
 
       expect(response.headers[header]).toBeUndefined()
-    },
-  )
+    })
+  }
 
-  itWhenSupported('defects.documented').fails.each(SECURITY_HEADERS)(
-    'sets the %s security header (BUG-011)',
-    async (header) => {
+  for (const header of SECURITY_HEADERS) {
+    guardsDefect('BUG-011', `sets the ${header} security header`, async () => {
       const response = await room.list()
 
       expect(response.headers[header]).toBeDefined()
-    },
-  )
+    })
+  }
 })

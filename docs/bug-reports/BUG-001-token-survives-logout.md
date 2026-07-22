@@ -1,14 +1,14 @@
 # BUG-001: Auth token remains valid after logout
 
-| Field         | Value                                                                           |
-| ------------- | ------------------------------------------------------------------------------- |
-| Severity      | Major                                                                           |
-| Priority      | High                                                                            |
-| Status        | Open                                                                            |
-| Service       | auth                                                                            |
-| Endpoint      | `POST /api/auth/logout`, `POST /api/auth/validate`                              |
-| Environment   | https://automationintesting.online (live), 2026-07-16                           |
-| Covering test | `tests/smoke/auth.test.ts` → `it.fails('invalidates the token after logout …')` |
+| Field         | Value                                                                                        |
+| ------------- | -------------------------------------------------------------------------------------------- |
+| Severity      | Major                                                                                        |
+| Priority      | High                                                                                         |
+| Status        | Open                                                                                         |
+| Service       | auth                                                                                         |
+| Endpoint      | `POST /api/auth/logout`, `POST /api/auth/validate`                                           |
+| Environment   | https://automationintesting.online (live), 2026-07-16                                        |
+| Covering test | `tests/smoke/auth.test.ts` → `guardsDefect('BUG-001', 'invalidates the token after logout')` |
 
 ## Summary
 
@@ -50,4 +50,4 @@ Broken session termination: a leaked or intercepted token cannot be revoked by l
 
 ## Notes
 
-Guarded by an `it.fails` test — the suite will flag the moment the defect is fixed so the marker can be removed.
+Guarded by a `guardsDefect` test — the suite will flag the moment the defect is fixed so the marker can be removed.
