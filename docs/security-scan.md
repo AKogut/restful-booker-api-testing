@@ -19,8 +19,10 @@ The infrastructure-header leak, [BUG-010](bug-reports/BUG-010-infrastructure-hea
 
 1. Brings the six services up with `docker compose`, waiting on each service's context-path health endpoint.
 2. Runs `zap-baseline.py` against the room service on the shared Docker network.
-3. Uploads the HTML, Markdown and JSON reports as the `zap-baseline-report` artifact.
+3. Uploads the HTML, Markdown and JSON reports as the `zap-baseline-report` artifact, and **fails if there is nothing to upload** — a scan that produces no report is a failed scan, not a green one.
 4. Fails the run only on **FAIL-level** alerts; warnings are recorded in the artifact but do not break the build.
+
+The report directory is made world-writable before the scan. The ZAP container runs as its own user, so a directory created by the runner is not writable from inside it — on a Linux runner that produces `AccessDeniedException` and no report. Docker Desktop on macOS maps permissions loosely enough to hide this, so it only appears in CI.
 
 It runs **daily** (04:00 UTC, an hour after the nightly report) and on demand via `workflow_dispatch`. It is deliberately not a pull-request gate: the scan is slow and, like every dockerized-target job, the container stack is a different version from live (see [target-differences.md](target-differences.md)), so it is a monitoring signal rather than a merge blocker.
 

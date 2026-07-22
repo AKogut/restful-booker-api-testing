@@ -37,6 +37,7 @@ jobs:
       - name: Run the ZAP baseline scan
         run: |
           mkdir -p zap-report
+          chmod 777 zap-report
           docker run --network host -v "$PWD:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
             zap-baseline.py \
             -t http://localhost:3001/room/ \
@@ -54,6 +55,7 @@ jobs:
         with:
           name: zap-baseline-report
           path: zap-report/
+          if-no-files-found: error
 
       - name: Fail the run only on FAIL-level alerts
         run: |
