@@ -37,6 +37,63 @@ jobs:
       - run: npm ci
       - run: npm run test:unit
 
+  contract-tests:
+    name: Contract tests (Pact)
+    runs-on: ubuntu-latest
+    needs: [static-checks, unit-tests]
+    env:
+      PACT_VERSION: ${{ github.sha }}
+      PACT_BRANCH: ${{ github.head_ref || github.ref_name }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: cp .env.local.example .env.local
+
+      - name: Generate the consumer pacts
+        run: npm run test:pact
+
+      - name: Start the broker and the dockerized platform
+        run: |
+          npm run pact:broker:up
+          npm run docker:up
+
+      - name: Wait for every service to report healthy
+        run: |
+          services="3004/auth 3001/room 3000/booking 3002/branding 3005/report 3006/message"
+          for attempt in $(seq 1 60); do
+            ready=0
+            for service in $services; do
+              code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${service}/actuator/health" 2>/dev/null || true)
+              [ "$code" = "200" ] && ready=$((ready + 1))
+            done
+            if [ "$ready" = "6" ]; then echo "all six services healthy"; exit 0; fi
+            sleep 5
+          done
+          echo "::error::platform did not become healthy in time"
+          docker compose logs
+          exit 1
+
+      - name: Publish the pacts to the broker
+        run: npm run pact:publish
+
+      - name: Verify every provider against the published pacts
+        run: npm run pact:verify
+        env:
+          PACT_BROKER_URL: http://localhost:9292
+
+      - name: Gate on can-i-deploy
+        run: npm run pact:can-i-deploy
+
+      - name: Tear down
+        if: always()
+        run: |
+          npm run docker:down
+          npm run pact:broker:down
+
   live-tests:
     name: Tests & coverage
     runs-on: ubuntu-latest

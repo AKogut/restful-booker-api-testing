@@ -65,10 +65,13 @@ Shapes are adapted at the _acquisition_ boundary and asserted at the _contract_ 
 | Response          | live                                    | local                                            | Adapter                          |
 | ----------------- | --------------------------------------- | ------------------------------------------------ | -------------------------------- |
 | `auth.login`      | `{"token":"…"}`                         | empty body + `Set-Cookie: token=…`               | `extractToken()`                 |
+| `room.create`     | `{"success":true}`                      | the full created `Room`                          | gated by `auth.describesOutcome` |
 | `booking.create`  | flat `Booking`                          | `{"bookingid":…,"booking":{…}}`                  | `createdBooking()`               |
 | validation errors | `{"errors":["size must be between …"]}` | `{"error":…,"errorMessage":…,"fieldErrors":[…]}` | `validationMessages()`           |
 | `auth.validate`   | `{"valid":true}`                        | empty body                                       | gated by `auth.describesOutcome` |
 | `auth.logout`     | `{"success":true}`                      | empty body                                       | gated by `auth.describesOutcome` |
+
+Two of the differences above are no longer only prose. The Pact contracts describe the dockerized provider, so replaying the `rbp-auth` pact against live fails twice: on the `auth.rejected` status (`403` expected, `401` returned) and on the `auth.login` shape (no `Set-Cookie`, because live returns the token in the body). One row from each table, checked by a machine rather than by a reader. See [contract-testing.md](contract-testing.md).
 
 The validation envelopes differ but the **messages inside are identical** (`must be greater than or equal to 1`), which is what the dataset matrices assert. That is the useful part of the contract; the envelope is version trivia.
 
