@@ -167,4 +167,8 @@ Allure results are produced when `ALLURE=1`, rendered to HTML and published to [
 
 ## Planned extensions
 
-Contract testing with Pact (consumer-driven contracts between report and its providers), OWASP-oriented security checks including a ZAP baseline scan, k6 performance smoke with latency and error-rate budgets, and a Dockerised platform target for fully deterministic runs.
+**k6 performance smoke** with latency and error-rate budgets, run nightly, is the one layer still outstanding ([M10](https://github.com/AKogut/restful-booker-api-testing/milestone/11)).
+
+Everything else previously listed here has shipped: consumer-driven contracts with Pact ([contract-testing.md](contract-testing.md)), the OWASP-oriented security suite and ZAP baseline scan ([security-scan.md](security-scan.md)), and the dockerised target with its nightly drift run.
+
+Two diagnostic threads stay deliberately open rather than being closed on a guess: [#67](https://github.com/AKogut/restful-booker-api-testing/issues/67), the unexplained `POST /room` stalls, and [#83](https://github.com/AKogut/restful-booker-api-testing/issues/83), the double slash in every local-target path.
