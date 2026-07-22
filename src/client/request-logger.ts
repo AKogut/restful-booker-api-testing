@@ -1,3 +1,5 @@
+import { appendFileSync } from 'node:fs'
+
 const REDACTED = '***'
 
 const SENSITIVE_KEYS = new Set(['password', 'token', 'authorization', 'cookie', 'set-cookie'])
@@ -46,4 +48,37 @@ export const consoleExchangeLogger: ExchangeLogger = (entry) => {
   if (process.env.HTTP_LOG === 'true') {
     console.info(JSON.stringify(entry))
   }
+}
+
+export interface ExchangeDiagnostic {
+  correlationId: string
+  method: string
+  url: string
+  status?: number
+  durationMs?: number
+  attempt?: number
+  error?: string
+}
+
+export const toDiagnostic = (entry: ExchangeLogEntry): ExchangeDiagnostic => ({
+  correlationId: entry.correlationId,
+  method: entry.method,
+  url: entry.url,
+  ...(entry.status === undefined ? {} : { status: entry.status }),
+  ...(entry.durationMs === undefined ? {} : { durationMs: Math.round(entry.durationMs) }),
+  ...(entry.attempt === undefined ? {} : { attempt: entry.attempt }),
+  ...(entry.error === undefined ? {} : { error: entry.error }),
+})
+
+export const fileExchangeLogger: ExchangeLogger = (entry) => {
+  const path = process.env.HTTP_LOG_FILE
+  if (path === undefined || path.length === 0) {
+    return
+  }
+  appendFileSync(path, `${JSON.stringify(toDiagnostic(entry))}\n`)
+}
+
+export const defaultExchangeLogger: ExchangeLogger = (entry) => {
+  consoleExchangeLogger(entry)
+  fileExchangeLogger(entry)
 }

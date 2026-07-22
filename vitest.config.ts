@@ -24,6 +24,8 @@ export default defineConfig({
     include: ['tests/**/*.test.ts'],
     globalSetup: ['./tests/global-setup.ts'],
     testTimeout: 30_000,
+    hookTimeout: 90_000,
+    teardownTimeout: 90_000,
     reporters: reporters(),
     coverage: {
       provider: 'v8',
@@ -49,6 +51,7 @@ export default defineConfig({
       '@factories': alias('factories'),
       '@support': alias('support'),
       '@profiles': alias('profiles'),
+      '@diagnostics': alias('diagnostics'),
     },
   },
 })

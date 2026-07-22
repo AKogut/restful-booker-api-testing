@@ -49,4 +49,19 @@ jobs:
           cache: npm
       - run: npm ci
       - run: cp .env.example .env
-      - run: npm run coverage
+      - name: Run the full suite with coverage
+        run: npm run coverage
+        env:
+          HTTP_LOG_FILE: exchanges.jsonl
+
+      - name: Summarise the HTTP exchanges
+        if: failure()
+        run: npm run diagnose:exchanges
+
+      - name: Upload the exchange log
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: exchange-log-${{ github.run_attempt }}
+          path: exchanges.jsonl
+          if-no-files-found: warn

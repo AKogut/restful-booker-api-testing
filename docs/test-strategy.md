@@ -75,6 +75,28 @@ A shared demo produces two kinds of red that must not be conflated:
 
 Retries are deliberately narrow: idempotent methods only, transient statuses only, capped attempts, and disabled outright in the negative suites via `createServicesWithoutRetry()`. Every attempt is recorded in the exchange log, so a call that only passes on retry is visible rather than hidden — a retry policy that silently masks degradation would be worse than no retry at all.
 
+### What the exchange log established about the "CI-only" failures
+
+Setting `HTTP_LOG_FILE` writes one compact record per HTTP exchange — method, url, status, duration, attempt — and `npm run diagnose:exchanges` summarises it. CI writes the log on every live run and uploads it as an artifact when the job fails.
+
+A local baseline over a full suite (549 exchanges) gave the reference profile:
+
+| Host                         | Exchanges | p95        |
+| ---------------------------- | --------- | ---------- |
+| `automationintesting.online` | 440       | **168 ms** |
+| loopback stubs (unit tests)  | 109       | ≤ 52 ms    |
+
+Against the live host: **zero** transient responses (`408/425/429/502/503/504`) and no evidence of throttling. Two outliers stood out, both around 30 s:
+
+1. `GET /report` → `500` after 31 382 ms — [BUG-009](bug-reports/BUG-009-report-stalls-on-invalid-token.md), already documented.
+2. `POST /room` → **timed out at 30 015 ms** — the same shape as the failures previously believed to be CI-only.
+
+The second one matters twice over. It reproduced **locally**, so the "CI-only" framing was wrong: this is platform latency that CI meets more often, not something specific to hosted runners. And the suite still reported **259/259 green** while it happened.
+
+It could only hide in a test that treats a throw as success. Every other `room.create` call site is an ordinary test where a transport error fails the test; the one exception is the `it.fails` guard for BUG-007. **That guard passed because the request hung, not because the status was wrong** — the same false green [BUG-009](bug-reports/BUG-009-report-stalls-on-invalid-token.md) taught, in a second guard.
+
+This is a limit of the `it.fails` idiom itself: it accepts _any_ failure, so it cannot distinguish "the defect is still present" from "the request never completed". Timing evidence is what exposes it, which is why an unexplained runtime near the client timeout is treated as suspect.
+
 ## Targets
 
 | Target  | Command              | Purpose                                                          |
@@ -94,7 +116,7 @@ They run **different versions of the same API**, so expectations are declared pe
 | Push to `main`      | Full suite + Allure report published to GitHub Pages                                     |
 | Nightly 03:00 UTC   | Full suite against live platform; report republished; the run fails if the suite was red |
 | Manual              | `Tests (manual)` workflow — any single suite or all together                             |
-| Weekly (Mon 04:00)  | OWASP ZAP baseline scan against the dockerized platform ([details](security-scan.md))    |
+| Daily 04:00 UTC     | OWASP ZAP baseline scan against the dockerized platform ([details](security-scan.md))    |
 
 Static checks and unit tests run in parallel and gate the live job, so a broken build never reaches the shared environment.
 
