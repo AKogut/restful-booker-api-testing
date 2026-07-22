@@ -79,6 +79,7 @@ The validation envelopes differ but the **messages inside are identical** (`must
 
 - **Trailing slashes matter locally.** `POST http://localhost:3001/room` answers `302` to `/room/`, and following a `302` turns a `POST` into a `GET` — so a create silently became a list, and the "response" was the room listing. `.env.local` therefore ends every base URL with `/`. Live does not redirect, so its URLs have no trailing slash.
 - **`'token' in response.data` throws** when the body is an empty string rather than an object. Live always returns JSON, so this latent bug in `adminToken()` could never fire there. The local target found it.
+- **Every local path carries a double slash.** Because the base URLs end with `/` (see above) and `RequestBuilder` paths start with one, `room.delete(56)` requests `http://localhost:3001/room//56`. The container stack tolerates it — 236 of 400 exchanges in a full local run are affected and every one returns its expected status — but it makes the exchange diagnostics harder to read and would break against a stricter router. Live is unaffected: its base URLs have no trailing slash. Tracked as [#83](https://github.com/AKogut/restful-booker-api-testing/issues/83); not a behavioural difference between the targets, which is why it is a gotcha rather than a table row.
 
 ## The local stack runs sequentially
 

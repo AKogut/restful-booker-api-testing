@@ -1,0 +1,96 @@
+name: Local Target
+
+on:
+  schedule:
+    - cron: '0 2 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  local-suite:
+    name: Suite against dockerized RBP 2.2
+    runs-on: ubuntu-latest
+    env:
+      JUNIT_FILE: junit-local.xml
+      HTTP_LOG_FILE: exchanges-local.jsonl
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+      - run: cp .env.local.example .env.local
+
+      - name: Start the dockerized platform
+        run: npm run docker:up
+
+      - name: Wait for every service to report healthy
+        uses: ./.github/actions/wait-for-platform
+
+      - name: Run every live suite against the containers
+        id: suite
+        shell: bash
+        run: npm run test:local | tee local-run.log
+        continue-on-error: true
+
+      - name: Summarise the run
+        if: always()
+        run: |
+          {
+            echo '## Target: `local` — RBP `2.2` images via docker compose'
+            echo
+            echo 'This is **not** the deployed platform. The two run different versions of the same API, so a green run here is not evidence about live — it detects the two drifting further apart. See [target-differences.md](docs/target-differences.md).'
+            echo
+            echo '```'
+            grep -E 'Test Files|Tests ' local-run.log || echo 'the suite produced no summary line'
+            echo '```'
+            echo
+            echo 'Skipped tests are the defect guards and capability-gated assertions that describe live behaviour and are deliberately not asserted here.'
+          } >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload the local-target JUnit results
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: junit-local-target
+          path: junit-local.xml
+          if-no-files-found: error
+
+      - name: Summarise the HTTP exchanges
+        if: steps.suite.outcome == 'failure'
+        run: npm run diagnose:exchanges
+
+      - name: Upload the failure diagnostics
+        if: steps.suite.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-target-diagnostics
+          path: |
+            exchanges-local.jsonl
+            local-run.log
+          if-no-files-found: warn
+
+      - name: Capture the container logs
+        if: steps.suite.outcome == 'failure'
+        run: docker compose logs --no-color > container-logs.txt
+
+      - name: Upload the container logs
+        if: steps.suite.outcome == 'failure'
+        uses: actions/upload-artifact@v4
+        with:
+          name: local-target-container-logs
+          path: container-logs.txt
+          if-no-files-found: warn
+
+      - name: Tear down the platform
+        if: always()
+        run: npm run docker:down
+
+      - name: Fail the run when the local target diverged
+        if: steps.suite.outcome == 'failure'
+        run: |
+          echo "::error::The suite failed against the container stack. Either the containers regressed, or the two targets have drifted apart — a genuine new divergence belongs in docs/target-differences.md."
+          exit 1
