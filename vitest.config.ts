@@ -9,7 +9,7 @@ type Reporters = NonNullable<NonNullable<ViteUserConfig['test']>['reporters']>
 const reporters = (): Reporters => {
   const active: (string | [string, Record<string, unknown>])[] = ['default']
   if (process.env.CI) {
-    active.push(['junit', { outputFile: 'junit.xml' }])
+    active.push(['junit', { outputFile: process.env.JUNIT_FILE ?? 'junit.xml' }])
   }
   if (process.env.ALLURE === '1') {
     active.push(['allure-vitest/reporter', { resultsDir: 'allure-results' }])

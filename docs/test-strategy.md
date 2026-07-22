@@ -140,15 +140,24 @@ They run **different versions of the same API**, so expectations are declared pe
 
 `local` is a development and exploration target, not a replacement for `live`: the defect guards document live's behaviour and are skipped elsewhere, so a green local run is not evidence about the deployed platform. CI gates on `live`.
 
+### The local target runs nightly, not on pull requests
+
+20 of the 140 tests skip against `local` — 16 defect guards plus 4 capability-gated assertions. Gating merges on a run with a seventh of its assertions switched off would trade a real signal for a fast one.
+
+It is still worth running on a schedule, because its value is orthogonal to the PR gate: it detects the two targets **drifting further apart**, which is otherwise something we would only notice by accident. The `Local Target` workflow brings the stack up nightly, runs every live suite against it sequentially, and publishes its JUnit results under a separate artifact name so the two targets are never conflated. A failure means either the containers regressed or a new divergence appeared — the latter belongs in [target-differences.md](target-differences.md).
+
 ## CI strategy
 
-| Trigger             | What runs                                                                                |
-| ------------------- | ---------------------------------------------------------------------------------------- |
-| Pull request / push | Static checks · Unit tests · Tests & coverage (full suite, thresholds enforced)          |
-| Push to `main`      | Full suite + Allure report published to GitHub Pages                                     |
-| Nightly 03:00 UTC   | Full suite against live platform; report republished; the run fails if the suite was red |
-| Manual              | `Tests (manual)` workflow — any single suite or all together                             |
-| Daily 04:00 UTC     | OWASP ZAP baseline scan against the dockerized platform ([details](security-scan.md))    |
+| Trigger             | What runs                                                                                   |
+| ------------------- | ------------------------------------------------------------------------------------------- |
+| Pull request / push | Static checks · Unit tests · Contract tests (Pact) · Tests & coverage (thresholds enforced) |
+| Push to `main`      | Full suite + Allure report published to GitHub Pages                                        |
+| Nightly 02:00 UTC   | Every live suite against the dockerized target — drift detection, not a merge gate          |
+| Nightly 03:00 UTC   | Full suite against live platform; report republished; the run fails if the suite was red    |
+| Daily 04:00 UTC     | OWASP ZAP baseline scan against the dockerized platform ([details](security-scan.md))       |
+| Manual              | `Tests (manual)` workflow — any single suite or all together                                |
+
+The three dockerized jobs are staggered an hour apart so they never contend for the same runner ports.
 
 Static checks and unit tests run in parallel and gate the live job, so a broken build never reaches the shared environment.
 

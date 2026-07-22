@@ -10,7 +10,7 @@ coverage/
 allure-results/
 allure-report/
 test-results/
-junit.xml
+junit*.xml
 *.log
 npm-debug.log*
 
@@ -28,5 +28,5 @@ Thumbs.db
 
 zap-report/
 zap.yaml
-exchanges.jsonl
+exchanges*.jsonl
 pacts/

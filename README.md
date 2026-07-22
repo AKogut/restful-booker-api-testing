@@ -3,6 +3,7 @@
 [![CI](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/ci.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/ci.yml)
 [![Report](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/report.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/report.yml)
 [![Security Scan](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/security-scan.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/security-scan.yml)
+[![Local Target](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/local-target.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/local-target.yml)
 [![Allure report](https://img.shields.io/badge/Allure_report-live-brightgreen.svg)](https://akogut.github.io/restful-booker-api-testing/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-LTS-brightgreen.svg)](./.nvmrc)
@@ -151,6 +152,8 @@ npm run docker:up      # start the six services
 npm run test:local     # run every live suite against the container stack
 npm run docker:down    # stop and remove volumes
 ```
+
+The `local` target runs **nightly in CI**, never on pull requests: 20 of the 140 tests skip against it, so a green run there is not evidence about the deployed platform. Its job is to catch the two targets drifting further apart — see [test-strategy.md](docs/test-strategy.md#the-local-target-runs-nightly-not-on-pull-requests).
 
 The target is selected by `ENV_FILE`; each env file sets `TEST_MODE`, which drives the expectation profile.
 

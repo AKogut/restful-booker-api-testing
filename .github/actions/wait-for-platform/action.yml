@@ -1,0 +1,34 @@
+name: Wait for the dockerized platform
+description: Polls every RBP service on its context-path health endpoint until all six report healthy.
+
+inputs:
+  attempts:
+    description: How many times to poll before giving up
+    required: false
+    default: '60'
+  interval:
+    description: Seconds between polls
+    required: false
+    default: '5'
+
+runs:
+  using: composite
+  steps:
+    - shell: bash
+      run: |
+        services="3004/auth 3001/room 3000/booking 3002/branding 3005/report 3006/message"
+        for attempt in $(seq 1 ${{ inputs.attempts }}); do
+          ready=0
+          for service in $services; do
+            code=$(curl -s -o /dev/null -w '%{http_code}' "http://localhost:${service}/actuator/health" 2>/dev/null || true)
+            [ "$code" = "200" ] && ready=$((ready + 1))
+          done
+          if [ "$ready" = "6" ]; then
+            echo "all six services healthy after $((attempt * ${{ inputs.interval }}))s"
+            exit 0
+          fi
+          sleep ${{ inputs.interval }}
+        done
+        echo "::error::platform did not become healthy in time (${ready}/6 responding)"
+        docker compose logs
+        exit 1
