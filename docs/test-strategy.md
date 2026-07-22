@@ -15,13 +15,14 @@ Verify the Restful Booker Platform API — six independent Spring Boot services 
 
 ## Risk-based prioritisation
 
-| Risk                                | Why it matters                             | Coverage                                                                                         |
-| ----------------------------------- | ------------------------------------------ | ------------------------------------------------------------------------------------------------ |
-| Broken authorization                | Protected data or mutations exposed        | Authorization matrix over every protected endpoint                                               |
-| Double booking                      | Direct revenue/customer impact             | Overlap rejection asserted (`409`)                                                               |
-| Contract drift between services     | Report silently diverges from room/booking | Strict schemas + cross-service consistency test                                                  |
-| Data-integrity gaps across services | Orphan records                             | Booking against a non-existent room ([BUG-005](bug-reports/BUG-005-booking-nonexistent-room.md)) |
-| Information disclosure              | Internals and PII leaked to callers        | Validation-leak and inbox-exposure checks                                                        |
+| Risk                                | Why it matters                             | Coverage                                                                                           |
+| ----------------------------------- | ------------------------------------------ | -------------------------------------------------------------------------------------------------- |
+| Broken authorization                | Protected data or mutations exposed        | Authorization matrix over every protected endpoint                                                 |
+| Double booking                      | Direct revenue/customer impact             | Overlap rejection asserted (`409`)                                                                 |
+| Contract drift between services     | Report silently diverges from room/booking | Strict schemas + cross-service consistency test                                                    |
+| A provider breaks its callers       | A working client stops working silently    | Pact contracts verified against the running providers ([contract-testing.md](contract-testing.md)) |
+| Data-integrity gaps across services | Orphan records                             | Booking against a non-existent room ([BUG-005](bug-reports/BUG-005-booking-nonexistent-room.md))   |
+| Information disclosure              | Internals and PII leaked to callers        | Validation-leak and inbox-exposure checks                                                          |
 
 ## Suite taxonomy
 
@@ -30,6 +31,7 @@ Verify the Restful Booker Platform API — six independent Spring Boot services 
 | `unit`        | none    | Framework internals: config parsing, redaction, request building, error normalization, health mapping, schema assertion | `npm run test:unit`        |
 | `smoke`       | live    | Behavioural happy paths and key negatives per service                                                                   | `npm run test:smoke`       |
 | `contract`    | live    | Response schemas, drift detection, cross-service consistency                                                            | `npm run test:contract`    |
+| `pact`        | none    | Consumer-driven contracts: what the client layer requires of auth, room and booking                                     | `npm run test:pact`        |
 | `negative`    | live    | Credential rejection, authorization matrix, boundary and malformed input                                                | `npm run test:negative`    |
 | `data-driven` | live    | Room and booking validation matrices driven by external JSON datasets                                                   | `npm run test:data-driven` |
 | `property`    | live    | fast-check properties: payload round-trip, double-booking rejection, summary reflection                                 | `npm run test:property`    |

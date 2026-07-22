@@ -35,6 +35,7 @@ Each service exposes Swagger UI and an `/actuator/health` endpoint. Mutating ope
 | HTTP client            | Axios (wrapped in a typed `HttpClient`)   |
 | Test runner            | Vitest                                    |
 | Schema & contract      | Zod → JSON Schema                         |
+| Consumer contracts     | Pact (pact-js) + dockerized Pact Broker   |
 | Property-based testing | fast-check                                |
 | Test data              | @faker-js/faker                           |
 | Deterministic target   | Dockerized RBP via docker-compose         |
@@ -59,6 +60,7 @@ tests/
   unit/       Hermetic framework tests (no network)
   smoke/      Behavioural happy paths per service
   contract/   Schema, drift & cross-service consistency
+  pact/       Consumer-driven contracts (hermetic, no platform needed)
   negative/   Auth, authorization, boundary, malformed input
   data-driven/ JSON-dataset driven room & booking matrices
   property/   fast-check property-based suites
@@ -76,6 +78,7 @@ docs/         Architecture, test strategy, bug reports
 - **Branding / Report** — read/update branding; report consistency vs room + booking
 - **Health** — `/actuator/health` gate across all services
 - **Contract** — every response validated against its schema; cross-service consistency
+- **Consumer contracts** — Pact contracts for auth, room and booking, verified against the running providers
 - **Negative & data-driven** — authorization, boundary, malformed, table-driven, and property-based (incl. double-booking)
 - **Security** — BFLA/IDOR authorization matrix, token tampering, header hygiene, secret non-leakage (OWASP API-oriented)
 
@@ -102,6 +105,8 @@ npm test
 | `npm run docker:down`   | Stop it and drop volumes                    |
 | `npm run test:contract` | Schema, drift & cross-service checks        |
 | `npm run test:security` | OWASP-oriented authorization & token checks |
+| `npm run test:pact`     | Generate the consumer pacts (no platform)   |
+| `npm run pact:verify`   | Verify providers against the pacts          |
 | `npm run typecheck`     | TypeScript type checking                    |
 | `npm run lint`          | ESLint                                      |
 | `npm run format`        | Prettier                                    |
@@ -109,6 +114,8 @@ npm test
 ## Contracts
 
 Zod schemas in `src/schemas/` are the single source of truth for every service response. `npm run schema:export` renders them to language-agnostic JSON Schema files under `schemas/`. The `@contract` suite validates live responses against these schemas, detects drift (unexpected fields, malformed dates) via strict parsing, and asserts cross-service consistency (a booking surfaces in the room report).
+
+On top of that, **Pact** contracts state what this framework's client layer requires of `auth`, `room` and `booking`, and CI replays them against the running services before a merge. Schemas describe a response that arrived; a pact describes a request that must keep working. See [docs/contract-testing.md](docs/contract-testing.md).
 
 ## Resilience
 

@@ -30,6 +30,7 @@ tests/                     specifications only
   unit/                    hermetic, no network
   smoke/                   behavioural happy paths + key negatives
   contract/                schema, drift and cross-service consistency
+  pact/                    consumer-driven contracts, hermetic against a Pact mock
   negative/                auth, authorization, boundary, malformed
   data-driven/             JSON-dataset driven room and booking matrices
   property/                fast-check property-based suites
@@ -77,6 +78,8 @@ Zod schemas in `src/schemas/` are the single source of truth for response shapes
 2. exported to language-agnostic JSON Schema under `schemas/` with `npm run schema:export`.
 
 Schemas are `.strict()`, so an unexpected field is a failure — that is what makes drift detection meaningful.
+
+A third layer sits above them: **consumer-driven contracts**. The `pact` suite drives the real service classes against a Pact mock server and publishes what this framework requires of `auth`, `room` and `booking`; `npm run pact:verify` replays those contracts against the running providers. Schemas validate a response that arrived, contracts assert that a request keeps working — and the pact examples are themselves validated by the schemas, so the two layers cannot drift apart. See [contract-testing.md](contract-testing.md).
 
 ## Environment readiness
 

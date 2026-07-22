@@ -76,3 +76,4 @@ gh pr create --fill
 - ESLint and Prettier must pass.
 - New behavior must be covered by tests.
 - Code is self-documenting; avoid inline comments in favor of clear naming.
+- Changing a service method's request or response means regenerating the pacts (`npm run test:pact`) and verifying them against the containers (`npm run pact:verify`) — a consumer contract that no provider has answered is an assertion, not evidence. See [docs/contract-testing.md](docs/contract-testing.md).

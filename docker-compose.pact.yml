@@ -1,0 +1,35 @@
+name: pact
+
+services:
+  pact-broker-db:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_USER: pact
+      POSTGRES_PASSWORD: pact
+      POSTGRES_DB: pact
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U pact -d pact']
+      interval: 5s
+      timeout: 5s
+      retries: 20
+
+  pact-broker:
+    image: pactfoundation/pact-broker:latest
+    ports:
+      - '127.0.0.1:9292:9292'
+    depends_on:
+      pact-broker-db:
+        condition: service_healthy
+    environment:
+      PACT_BROKER_PORT: '9292'
+      PACT_BROKER_DATABASE_ADAPTER: postgres
+      PACT_BROKER_DATABASE_HOST: pact-broker-db
+      PACT_BROKER_DATABASE_NAME: pact
+      PACT_BROKER_DATABASE_USERNAME: pact
+      PACT_BROKER_DATABASE_PASSWORD: pact
+      PACT_BROKER_LOG_LEVEL: WARN
+    healthcheck:
+      test: ['CMD-SHELL', 'wget -q -O /dev/null http://127.0.0.1:9292/diagnostic/status/heartbeat']
+      interval: 5s
+      timeout: 5s
+      retries: 30
