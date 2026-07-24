@@ -53,7 +53,7 @@ jobs:
 
       - name: Upload the local-target JUnit results
         if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: junit-local-target
           path: junit-local.xml
@@ -65,7 +65,7 @@ jobs:
 
       - name: Upload the failure diagnostics
         if: steps.suite.outcome == 'failure'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: local-target-diagnostics
           path: |
@@ -79,7 +79,7 @@ jobs:
 
       - name: Upload the container logs
         if: steps.suite.outcome == 'failure'
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: local-target-container-logs
           path: container-logs.txt
