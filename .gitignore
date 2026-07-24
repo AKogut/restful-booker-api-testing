@@ -30,3 +30,4 @@ zap-report/
 zap.yaml
 exchanges*.jsonl
 pacts/
+perf-summary.json
