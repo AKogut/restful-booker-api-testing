@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { ApiError } from '@client/api-error'
-import { HttpClient } from '@client/http-client'
+import { HttpClient, resolveUrl } from '@client/http-client'
 import type { ExchangeLogEntry } from '@client/request-logger'
 
 interface RecordedRequest {
@@ -165,5 +165,52 @@ describe('HttpClient', () => {
     const client = new HttpClient({ baseUrl: 'http://127.0.0.1:1', timeoutMs: 500 })
 
     await expect(client.request({ method: 'GET', path: '/room' })).rejects.toBeInstanceOf(ApiError)
+  })
+
+  it('logs the resolved URL, not a double slash, when the base URL ends in a slash', async () => {
+    const entries: ExchangeLogEntry[] = []
+    const client = new HttpClient({
+      baseUrl: `${baseUrl}/`,
+      timeoutMs: 2000,
+      logger: (entry) => entries.push(entry),
+    })
+
+    await client.request({ method: 'GET', path: '/room' })
+
+    expect(recorded.at(-1)?.url).toBe('/room')
+    expect(entries[0]?.url).toBe(`${baseUrl}/room`)
+    expect(entries[0]?.url.replace('://', '')).not.toContain('//')
+  })
+
+  it('reports failures with the resolved URL when the base URL ends in a slash', async () => {
+    const client = new HttpClient({ baseUrl: `${baseUrl}/`, timeoutMs: 50 })
+
+    const error = await client
+      .request({ method: 'GET', path: '/slow' })
+      .then(() => undefined)
+      .catch((caught: unknown) => caught)
+
+    expect(error).toBeInstanceOf(ApiError)
+    const apiError = error as ApiError
+    expect(apiError.url).toBe(`${baseUrl}/slow`)
+    expect(apiError.message.replace('://', '')).not.toContain('//')
+  })
+})
+
+describe('resolveUrl', () => {
+  it('collapses the boundary slash the way axios resolves the request', () => {
+    expect(resolveUrl('http://host/room/', '/56')).toBe('http://host/room/56')
+    expect(resolveUrl('http://host/room', '/56')).toBe('http://host/room/56')
+  })
+
+  it('leaves a bare base URL untouched when the path is empty', () => {
+    expect(resolveUrl('http://host/room/', '')).toBe('http://host/room/')
+    expect(resolveUrl('http://host/room', '')).toBe('http://host/room')
+  })
+
+  it('never produces a double slash between base and path', () => {
+    const combined = resolveUrl('http://host/booking/', '/summary')
+    expect(combined.replace('://', '')).not.toContain('//')
+    expect(combined).toBe('http://host/booking/summary')
   })
 })
