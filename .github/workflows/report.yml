@@ -36,7 +36,7 @@ jobs:
         run: npm run test:report
         continue-on-error: true
       - run: npm run allure:generate
-      - uses: actions/upload-pages-artifact@v3
+      - uses: actions/upload-pages-artifact@v5
         with:
           path: allure-report
       - id: deploy
