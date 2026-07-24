@@ -17,6 +17,9 @@ declare module 'axios' {
   }
 }
 
+export const resolveUrl = (baseUrl: string, path: string): string =>
+  path.length === 0 ? baseUrl : `${baseUrl.replace(/\/+$/, '')}/${path.replace(/^\/+/, '')}`
+
 export interface HttpClientOptions {
   baseUrl: string
   timeoutMs: number
@@ -79,7 +82,7 @@ export class HttpClient {
       this.logger({
         correlationId: meta?.correlationId ?? '',
         method: (response.config.method ?? 'get').toUpperCase(),
-        url: `${response.config.baseURL ?? ''}${response.config.url ?? ''}`,
+        url: resolveUrl(response.config.baseURL ?? '', response.config.url ?? ''),
         status: response.status,
         durationMs: meta === undefined ? 0 : performance.now() - meta.startedAt,
         attempt: meta?.attempt ?? 1,
@@ -142,7 +145,7 @@ export class HttpClient {
     this.logger({
       correlationId: meta?.correlationId ?? '',
       method: request.method,
-      url: `${this.baseUrl}${request.path}`,
+      url: resolveUrl(this.baseUrl, request.path),
       attempt,
       ...(meta === undefined ? {} : { durationMs: performance.now() - meta.startedAt }),
       error: apiError.message,
@@ -150,7 +153,7 @@ export class HttpClient {
   }
 
   private normalizeError(error: unknown, request: ApiRequest): ApiError {
-    const url = `${this.baseUrl}${request.path}`
+    const url = resolveUrl(this.baseUrl, request.path)
     if (error instanceof AxiosError) {
       const timedOut = error.code === AxiosError.ECONNABORTED || error.code === 'ETIMEDOUT'
       return new ApiError(timedOut ? `Request timed out: ${url}` : `Network failure: ${url}`, {
