@@ -4,6 +4,7 @@
 [![Report](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/report.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/report.yml)
 [![Security Scan](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/security-scan.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/security-scan.yml)
 [![Local Target](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/local-target.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/local-target.yml)
+[![Performance](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/perf.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/perf.yml)
 [![Allure report](https://img.shields.io/badge/Allure_report-live-brightgreen.svg)](https://akogut.github.io/restful-booker-api-testing/)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-LTS-brightgreen.svg)](./.nvmrc)
@@ -38,6 +39,7 @@ Each service exposes Swagger UI and an `/actuator/health` endpoint. Mutating ope
 | Schema & contract      | Zod → JSON Schema                         |
 | Consumer contracts     | Pact (pact-js) + dockerized Pact Broker   |
 | Property-based testing | fast-check                                |
+| Performance / load     | k6 (TypeScript, `@types/k6`)              |
 | Test data              | @faker-js/faker                           |
 | Deterministic target   | Dockerized RBP via docker-compose         |
 | Reporting              | Allure + JUnit, published to GitHub Pages |
@@ -67,6 +69,7 @@ tests/
   property/   fast-check property-based suites
   security/   OWASP-oriented authz, token & injection checks
   data/       External test-case datasets
+perf/         k6 smoke-load harness (TypeScript), thresholds, nightly CI
 docs/         Architecture, test strategy, bug reports
 ```
 
@@ -82,6 +85,7 @@ docs/         Architecture, test strategy, bug reports
 - **Consumer contracts** — Pact contracts for auth, room and booking, verified against the running providers
 - **Negative & data-driven** — authorization, boundary, malformed, table-driven, and property-based (incl. double-booking)
 - **Security** — BFLA/IDOR authorization matrix, token tampering, header hygiene, secret non-leakage (OWASP API-oriented)
+- **Performance** — k6 smoke load on the booking flow with enforced p95-latency and error-rate budgets ([perf/](perf/README.md))
 
 ## Getting Started
 
@@ -131,6 +135,14 @@ npm test
 | `npm run docker:down` | Stop them and drop volumes |
 | `npm run docker:ps`   | Show container state       |
 | `npm run docker:logs` | Follow the container logs  |
+
+**Performance** ([details](perf/README.md))
+
+| Script                    | Purpose                                                     |
+| ------------------------- | ----------------------------------------------------------- |
+| `npm run perf:smoke`      | k6 smoke load against the local stack, thresholds enforced  |
+| `npm run perf:smoke:live` | The same against live — read-only; never for the write flow |
+| `npm run perf:typecheck`  | Type-check the k6 scripts against `@types/k6`               |
 
 **Reporting and diagnostics**
 
@@ -306,6 +318,7 @@ Twelve confirmed platform defects, each with reproduction steps, evidence and a 
 - [Target Differences](docs/target-differences.md) — live vs local, and why they are not the same API
 - [Contract Testing](docs/contract-testing.md) — Pact consumer contracts, provider verification, and who the consumer is
 - [Security Scan](docs/security-scan.md) — OWASP ZAP baseline in CI, and how it complements the security suite
+- [Performance](perf/README.md) — k6 smoke-load harness, budgets, and why load is its own layer
 - [Bug Reports](docs/bug-reports/) — twelve defects with evidence and guarding tests
 
 ## Contributing

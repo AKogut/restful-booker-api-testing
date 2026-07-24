@@ -43,7 +43,10 @@
     "format": "prettier --write .",
     "format:check": "prettier --check .",
     "prepare": "husky",
-    "diagnose:exchanges": "tsx scripts/summarize-exchanges.ts"
+    "diagnose:exchanges": "tsx scripts/summarize-exchanges.ts",
+    "perf:typecheck": "tsc -p perf/tsconfig.json --noEmit",
+    "perf:smoke": "k6 run perf/smoke.ts",
+    "perf:smoke:live": "PERF_TARGET=live k6 run perf/smoke.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^19.6.0",
@@ -51,6 +54,7 @@
     "@eslint/js": "^10.0.1",
     "@faker-js/faker": "^10.5.0",
     "@pact-foundation/pact": "^17.0.1",
+    "@types/k6": "^2.0.1",
     "@types/node": "^22.10.0",
     "@vitest/coverage-v8": "^3.0.0",
     "allure-commandline": "^2.43.0",

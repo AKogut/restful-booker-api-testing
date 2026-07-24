@@ -38,6 +38,8 @@ tests/                     specifications only
   data/                    external test-case datasets
   support/                 target gating and shared-token helpers
 
+perf/                      k6 smoke-load harness (own concurrency engine, TypeScript)
+
 src/
   config/                  env parsing + validation → typed AppConfig
   client/                  HttpClient (Axios), RequestBuilder, ApiError, redacting logger

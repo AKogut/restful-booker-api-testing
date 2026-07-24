@@ -12,6 +12,7 @@ Verify the Restful Booker Platform API — six independent Spring Boot services 
 | Authentication and authorization rules                           | Load and stress profiles (planned: k6)           |
 | Business rules (availability, double-booking)                    | Database-level assertions                        |
 | Response schemas and cross-service consistency                   | Third-party infrastructure (Cloudflare, Railway) |
+| Latency and error-rate budgets under load (k6 smoke)             | Sustained stress/soak profiles                   |
 
 ## Risk-based prioritisation
 
@@ -36,6 +37,7 @@ Verify the Restful Booker Platform API — six independent Spring Boot services 
 | `data-driven` | live    | Room and booking validation matrices driven by external JSON datasets                                                   | `npm run test:data-driven` |
 | `property`    | live    | fast-check properties: payload round-trip, double-booking rejection, summary reflection                                 | `npm run test:property`    |
 | `security`    | live    | OWASP-oriented: BFLA/IDOR authorization, token tampering, injection, mass-assignment, input handling                    | `npm run test:security`    |
+| `perf`        | docker  | k6 smoke load on the booking flow; p95-latency and error-rate budgets enforced as thresholds                            | `npm run perf:smoke`       |
 
 `npm run test:live` runs all six live suites; `npm test` runs everything; `npm run coverage` adds enforced thresholds.
 
@@ -148,16 +150,17 @@ It is still worth running on a schedule, because its value is orthogonal to the 
 
 ## CI strategy
 
-| Trigger             | What runs                                                                                   |
-| ------------------- | ------------------------------------------------------------------------------------------- |
-| Pull request / push | Static checks · Unit tests · Contract tests (Pact) · Tests & coverage (thresholds enforced) |
-| Push to `main`      | Full suite + Allure report published to GitHub Pages                                        |
-| Nightly 02:00 UTC   | Every live suite against the dockerized target — drift detection, not a merge gate          |
-| Nightly 03:00 UTC   | Full suite against live platform; report republished; the run fails if the suite was red    |
-| Daily 04:00 UTC     | OWASP ZAP baseline scan against the dockerized platform ([details](security-scan.md))       |
-| Manual              | `Tests (manual)` workflow — any single suite or all together                                |
+| Trigger             | What runs                                                                                            |
+| ------------------- | ---------------------------------------------------------------------------------------------------- |
+| Pull request / push | Static checks · Unit tests · Contract tests (Pact) · Tests & coverage (thresholds enforced)          |
+| Push to `main`      | Full suite + Allure report published to GitHub Pages                                                 |
+| Nightly 02:00 UTC   | Every live suite against the dockerized target — drift detection, not a merge gate                   |
+| Nightly 03:00 UTC   | Full suite against live platform; report republished; the run fails if the suite was red             |
+| Daily 04:00 UTC     | OWASP ZAP baseline scan against the dockerized platform ([details](security-scan.md))                |
+| Nightly 05:00 UTC   | k6 smoke load against the dockerized target; fails on a budget breach ([details](../perf/README.md)) |
+| Manual              | `Tests (manual)` workflow — any single suite or all together                                         |
 
-The three dockerized jobs are staggered an hour apart so they never contend for the same runner ports.
+The four dockerized jobs are staggered an hour apart (02:00–05:00 UTC) so they never contend for the same runner ports.
 
 Static checks and unit tests run in parallel and gate the live job, so a broken build never reaches the shared environment.
 
@@ -165,10 +168,14 @@ Static checks and unit tests run in parallel and gate the live job, so a broken 
 
 Allure results are produced when `ALLURE=1`, rendered to HTML and published to [GitHub Pages](https://akogut.github.io/restful-booker-api-testing/). JUnit XML is emitted in CI for machine consumption. The report is published even when the suite is red — the workflow then fails explicitly, so triage material exists for every failure.
 
-## Planned extensions
+## Performance
 
-**k6 performance smoke** with latency and error-rate budgets, run nightly, is the one layer still outstanding ([M10](https://github.com/AKogut/restful-booker-api-testing/milestone/11)).
+The functional suites assert correctness; they say nothing about behaviour under concurrent load. A [k6](https://k6.io) smoke fills that gap: a ramping-VU profile over the booking flow (room list, booking create, booking list) with p95-latency and error-rate budgets enforced as thresholds, so a regression exits non-zero and fails the nightly run. It runs against the **dockerized** target — load-testing writes against the shared public demo would pollute an environment other people use. Full design, budgets and the "provision your own room" determinism rule in [perf/README.md](../perf/README.md).
 
-Everything else previously listed here has shipped: consumer-driven contracts with Pact ([contract-testing.md](contract-testing.md)), the OWASP-oriented security suite and ZAP baseline scan ([security-scan.md](security-scan.md)), and the dockerised target with its nightly drift run.
+k6 runs on its own concurrency engine rather than the Vitest `HttpClient`, so it generates real parallel load; the scripts stay TypeScript, type-checked against `@types/k6` and gated in CI.
 
-Two diagnostic threads stay deliberately open rather than being closed on a guess: [#67](https://github.com/AKogut/restful-booker-api-testing/issues/67), the unexplained `POST /room` stalls, and [#83](https://github.com/AKogut/restful-booker-api-testing/issues/83), the double slash in every local-target path.
+## Still open
+
+Everything planned has now shipped — functional suites, consumer contracts, security and ZAP, the dockerized target with its nightly drift run, and this performance layer.
+
+Two diagnostic threads stay deliberately open rather than being closed on a guess: [#67](https://github.com/AKogut/restful-booker-api-testing/issues/67), the unexplained `POST /room` stalls.

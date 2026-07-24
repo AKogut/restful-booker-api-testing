@@ -1,0 +1,73 @@
+name: Performance
+
+on:
+  schedule:
+    - cron: '0 5 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  k6-smoke:
+    name: k6 smoke load (dockerized RBP)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+
+      - name: Type-check the k6 scripts
+        run: npm run perf:typecheck
+
+      - name: Start the dockerized platform
+        run: npm run docker:up
+
+      - name: Wait for every service to report healthy
+        uses: ./.github/actions/wait-for-platform
+
+      - uses: grafana/setup-k6-action@v1
+
+      - name: Run the smoke load
+        id: k6
+        continue-on-error: true
+        run: k6 run perf/smoke.ts
+
+      - name: Record the result in the run summary
+        if: always()
+        run: |
+          if [ -f perf-summary.json ]; then
+            node -e '
+              const m = require("./perf-summary.json").metrics;
+              const v = (n, s) => m[n]?.values?.[s];
+              const line =
+                `p95 ${v("http_req_duration","p(95)").toFixed(1)} ms · ` +
+                `errors ${(v("http_req_failed","rate")*100).toFixed(2)}% · ` +
+                `checks ${(v("checks","rate")*100).toFixed(1)}% · ` +
+                `${v("http_reqs","count")} requests`;
+              console.log(line);
+            ' >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "k6 produced no summary — the run did not complete" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload the k6 summary
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: k6-smoke-summary
+          path: perf-summary.json
+          if-no-files-found: error
+
+      - name: Tear down the platform
+        if: always()
+        run: npm run docker:down
+
+      - name: Fail the run when a budget was breached
+        if: steps.k6.outcome == 'failure'
+        run: |
+          echo "::error::A performance budget was breached — see the k6-smoke-summary artifact"
+          exit 1
