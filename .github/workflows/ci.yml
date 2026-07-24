@@ -104,7 +104,7 @@ jobs:
 
       - name: Upload the exchange log
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: exchange-log-${{ github.run_attempt }}
           path: exchanges.jsonl
