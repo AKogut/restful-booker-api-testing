@@ -4,6 +4,9 @@ coverage
 allure-results
 allure-report
 test-results
-junit.xml
+junit*.xml
 package-lock.json
 schemas
+pacts
+perf-summary.json
+zap-report

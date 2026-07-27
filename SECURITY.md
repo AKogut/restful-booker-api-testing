@@ -8,7 +8,7 @@ A test automation framework aimed at a **public demo API** ([automationintesting
 
 Open a [private security advisory](https://github.com/AKogut/restful-booker-api-testing/security/advisories/new), or email a.kogut01@gmail.com. Please do not open a public issue first.
 
-Relevant classes here are narrow but real: credential handling in `src/config`, redaction in the exchange logger, and anything that could cause a token or a payload to reach CI logs or an uploaded artifact. The logger deliberately records **no bodies and no headers** for exactly that reason — a regression there is a security bug, not a cosmetic one.
+Relevant classes here are narrow but real: credential handling in `src/config`, redaction in the exchange logger, and anything that could cause a token or a payload to reach CI logs or an uploaded artifact. The file logger — the one CI writes to disk and uploads — deliberately records **no bodies and no headers**, only a diagnostic envelope (method, URL, status, timing). The opt-in `HTTP_LOG=true` console logger prints the full exchange for local debugging, with passwords, tokens and cookies redacted. A regression in either — the file logger leaking a body, or the redaction set missing a sensitive key — is a security bug, not a cosmetic one.
 
 ## Defects found _in the platform under test_
 

@@ -150,7 +150,7 @@ They run **different versions of the same API**, so expectations are declared pe
 
 ### The local target runs nightly, not on pull requests
 
-20 of the 140 tests skip against `local` — 16 defect guards plus 4 capability-gated assertions. Gating merges on a run with a seventh of its assertions switched off would trade a real signal for a fast one.
+20 of the 140 tests skip against `local` — 16 defect-guard instances (the twelve guards, some fanned out over headers or endpoints) plus 4 capability-gated assertions. Gating merges on a run with a seventh of its assertions switched off would trade a real signal for a fast one.
 
 It is still worth running on a schedule, because its value is orthogonal to the PR gate: it detects the two targets **drifting further apart**, which is otherwise something we would only notice by accident. The `Local Target` workflow brings the stack up nightly, runs every live suite against it sequentially, and publishes its JUnit results under a separate artifact name so the two targets are never conflated. A failure means either the containers regressed or a new divergence appeared — the latter belongs in [target-differences.md](target-differences.md).
 
@@ -166,7 +166,7 @@ It is still worth running on a schedule, because its value is orthogonal to the 
 | Nightly 05:00 UTC   | k6 smoke load against the dockerized target; fails on a budget breach ([details](../perf/README.md)) |
 | Manual              | `Tests (manual)` workflow — any single suite or all together                                         |
 
-The four dockerized jobs are staggered an hour apart (02:00–05:00 UTC) so they never contend for the same runner ports.
+The three dockerized jobs — drift (02:00), ZAP (04:00) and k6 (05:00) — are staggered an hour apart so they never contend for the same runner ports. The 03:00 report job runs against the hosted platform and shares nothing with them.
 
 Static checks and unit tests run in parallel and gate the live job, so a broken build never reaches the shared environment.
 
