@@ -61,6 +61,26 @@ Each service exposes Swagger UI and an `/actuator/health` endpoint. Mutating ope
 
 A layered design keeps tests declarative and decoupled from transport and service topology:
 
+```mermaid
+flowchart TB
+  suites["9 test layers · Vitest<br/>unit · smoke · contract · pact · negative<br/>data-driven · property · security · perf"]
+
+  subgraph client["Layered client"]
+    direction LR
+    builder["Request builder"] --> http["HttpClient · Axios"] --> resilience["Bounded retry ·<br/>redacting logger ·<br/>readiness gate"]
+  end
+
+  svc["Service layer<br/>Auth · Room · Booking · Message · Branding · Report"]
+  zod["Zod schemas →<br/>JSON Schema contracts"]
+
+  suites --> client --> svc
+  zod -. validate responses .-> svc
+  svc --> live[("live target<br/>hosted platform")]
+  svc --> local[("local target<br/>Docker RBP 2.2")]
+```
+
+The layout on disk:
+
 ```
 src/
   config/     Typed, validated per-service configuration
@@ -335,7 +355,7 @@ Twelve confirmed platform defects, each with reproduction steps, evidence and a 
 
 ## Contributing
 
-See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching model, commit conventions, and workflow.
+See [CONTRIBUTING.md](CONTRIBUTING.md) for the branching model, commit conventions, and workflow, and [CODE_OF_CONDUCT.md](CODE_OF_CONDUCT.md) for community expectations.
 
 ## License
 
