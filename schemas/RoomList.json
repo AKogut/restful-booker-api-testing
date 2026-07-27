@@ -16,7 +16,14 @@
                 "type": "string"
               },
               "type": {
-                "type": "string"
+                "type": "string",
+                "enum": [
+                  "Single",
+                  "Twin",
+                  "Double",
+                  "Family",
+                  "Suite"
+                ]
               },
               "accessible": {
                 "type": "boolean"
