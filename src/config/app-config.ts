@@ -1,5 +1,6 @@
 import { config as loadDotenv } from 'dotenv'
 import type { RetryPolicy } from '@client/retry-policy'
+import type { AuthCredentials } from '@models/auth'
 import { envSchema } from './env-schema'
 
 export type TestMode = 'live' | 'local'
@@ -13,11 +14,6 @@ export interface ServiceUrls {
   readonly report: string
 }
 
-export interface Credentials {
-  readonly username: string
-  readonly password: string
-}
-
 export interface Readiness {
   readonly timeoutMs: number
   readonly intervalMs: number
@@ -27,7 +23,7 @@ export interface AppConfig {
   readonly mode: TestMode
   readonly timeoutMs: number
   readonly services: ServiceUrls
-  readonly credentials: Credentials
+  readonly credentials: AuthCredentials
   readonly retry: RetryPolicy
   readonly readiness: Readiness
 }

@@ -2,6 +2,10 @@ const asStringArray = (value: unknown): string[] | undefined =>
   Array.isArray(value) && value.every((entry) => typeof entry === 'string') ? value : undefined
 
 export const validationMessages = (data: unknown): string[] | undefined => {
+  const bareList = asStringArray(data)
+  if (bareList !== undefined) {
+    return bareList
+  }
   if (typeof data !== 'object' || data === null) {
     return undefined
   }

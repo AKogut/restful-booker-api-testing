@@ -1,7 +1,9 @@
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { bookingPayload } from '@factories/booking-factory'
+import { messagePayload } from '@factories/message-factory'
 import { roomPayload } from '@factories/room-factory'
 import type { BookingPayload } from '@models/booking'
+import type { MessagePayload } from '@models/message'
 import type { RoomType } from '@models/room'
 import type { Room } from '@models/room'
 import { supports } from '@profiles/target-profile'
@@ -13,7 +15,7 @@ import { CreatedResources } from '@support/created-resources'
 import { guardsDefect } from '../support/defect-guard'
 import { createdBooking } from '@support/bookings'
 
-const { room, booking } = createServicesWithoutRetry()
+const { room, booking, message } = createServicesWithoutRetry()
 
 let token: string
 let testRoom: Room
@@ -100,5 +102,43 @@ describe('room boundary @negative', () => {
       throw new Error('Expected a validation error body')
     }
     expect(messages[0]).toContain('Type can only contain')
+  })
+})
+
+describe('message boundary @negative', () => {
+  it('rejects a blank name', async () => {
+    const response = await message.create(messagePayload({ name: '' }))
+
+    expect(response.status).toBe(400)
+    expect(validationMessages(response.data)).toEqual(['Name may not be blank'])
+  })
+
+  it('rejects a malformed email', async () => {
+    const response = await message.create(messagePayload({ email: 'not-an-email' }))
+
+    expect(response.status).toBe(400)
+    expect(validationMessages(response.data)).toEqual(['must be a well-formed email address'])
+  })
+
+  it('rejects a too-short subject', async () => {
+    const response = await message.create(messagePayload({ subject: 'Hi' }))
+
+    expect(response.status).toBe(400)
+    expect(validationMessages(response.data)).toEqual([
+      'Subject must be between 5 and 100 characters.',
+    ])
+  })
+
+  it('rejects a missing description', async () => {
+    const { description: _description, ...withoutDescription } = messagePayload()
+
+    const response = await message.create(withoutDescription as MessagePayload)
+
+    expect(response.status).toBe(400)
+    const messages = validationMessages(response.data)
+    if (messages === undefined) {
+      throw new Error('Expected a validation error body')
+    }
+    expect(messages).toContain('Message must be set')
   })
 })
