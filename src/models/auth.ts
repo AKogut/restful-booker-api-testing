@@ -1,6 +1,6 @@
 export interface AuthCredentials {
-  username: string
-  password: string
+  readonly username: string
+  readonly password: string
 }
 
 export interface AuthToken {

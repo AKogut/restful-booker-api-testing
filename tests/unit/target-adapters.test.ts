@@ -76,6 +76,10 @@ describe('validationMessages', () => {
     ])
   })
 
+  it('reads a bare string array as the message endpoint returns it', () => {
+    expect(validationMessages(['Name may not be blank'])).toEqual(['Name may not be blank'])
+  })
+
   it('reads fieldErrors when the envelope wraps them', () => {
     const body = {
       error: 'BAD_REQUEST',

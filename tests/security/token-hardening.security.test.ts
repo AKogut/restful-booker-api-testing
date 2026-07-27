@@ -45,6 +45,7 @@ describe('token tampering @security', () => {
       const response = await auth.validate(candidate)
 
       expect(response.status).toBeGreaterThanOrEqual(400)
+      expect(response.status).toBeLessThan(500)
     },
   )
 
