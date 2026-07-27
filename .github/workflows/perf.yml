@@ -34,7 +34,7 @@ jobs:
       - name: Run the smoke load
         id: k6
         continue-on-error: true
-        run: k6 run perf/smoke.ts
+        run: npm run perf:smoke
 
       - name: Record the result in the run summary
         if: always()
