@@ -12,7 +12,19 @@
 
 Production-grade API test automation framework for the [Restful Booker Platform](https://automationintesting.online/) — a Spring Boot **microservices** Bed & Breakfast booking system. Built to demonstrate a modular, maintainable, and CI-integrated approach to testing a multi-service API, including cross-service contract validation.
 
-> **Status:** actively under construction. Work is tracked as milestones and issues on the [project board](https://github.com/users/AKogut/projects/15).
+> **Status:** feature-complete. All eleven milestones (M0–M10) are closed; the [project board](https://github.com/users/AKogut/projects/15) records how it was built. Ongoing work is upkeep — Dependabot updates and the nightly monitoring jobs.
+
+## What it demonstrates
+
+A single framework covering a microservices API from several angles, each earning its place:
+
+- **Layered client** — typed `HttpClient` over Axios with a fluent request builder, a redacting exchange logger (no bodies or headers reach a log), bounded retry on transient failures, and a readiness gate for the cold-starting shared demo.
+- **Nine test layers** — unit, smoke, schema/contract, negative, data-driven, property-based (fast-check), security (OWASP-oriented), consumer contracts (Pact, verified against running providers), and performance (k6 with enforced budgets).
+- **Two targets, one suite** — the hosted platform and a dockerized RBP that run _different versions of the same API_; every difference is declared in one profile rather than papered over, and a nightly job watches the two for drift.
+- **Defects as executable records** — twelve platform bugs, each a written report paired with a `guardsDefect` test that stays green while the bug exists and fails the moment it is fixed _or_ the request stops completing.
+- **CI that gates and CI that monitors** — pull requests are gated on static checks, unit, Pact and the full live suite with coverage thresholds; four staggered nightly jobs (live, drift, ZAP, k6) report against the moving target and publish artifacts.
+
+The design decisions, and several corrected mistakes, are written up in [`docs/`](docs/).
 
 ## System Under Test
 
