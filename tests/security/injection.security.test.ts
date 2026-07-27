@@ -92,6 +92,11 @@ describe('mass assignment @security', () => {
 
     expect(response.status).toBe(expectedStatus('resource.created'))
     expect(created).toBeDefined()
+    if (created === undefined) return
+
+    const stored = (await room.getById(created.roomid)).data as unknown as Record<string, unknown>
+    expect(stored.isAdmin).toBeUndefined()
+    expect(stored.approved).toBeUndefined()
   })
 })
 

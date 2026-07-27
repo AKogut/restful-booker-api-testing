@@ -1,8 +1,5 @@
 import fc from 'fast-check'
-import type { RoomType } from '@models/room'
-
-const ROOM_TYPES: RoomType[] = ['Single', 'Twin', 'Double', 'Family', 'Suite']
-const ROOM_FEATURES = ['TV', 'WiFi', 'Safe', 'Radio', 'Views']
+import { ROOM_FEATURES, ROOM_TYPES } from '@models/room'
 
 export const personNameArbitrary = fc
   .stringMatching(/^[A-Za-z]{3,18}$/)

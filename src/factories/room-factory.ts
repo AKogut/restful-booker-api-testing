@@ -1,8 +1,5 @@
 import { faker } from '@faker-js/faker'
-import type { RoomPayload, RoomType } from '@models/room'
-
-const ROOM_TYPES: RoomType[] = ['Single', 'Twin', 'Double', 'Family', 'Suite']
-const ROOM_FEATURES = ['TV', 'WiFi', 'Safe', 'Radio', 'Views']
+import { ROOM_FEATURES, ROOM_TYPES, type RoomPayload } from '@models/room'
 
 export const nextRoomName = (): string => faker.string.numeric(8)
 

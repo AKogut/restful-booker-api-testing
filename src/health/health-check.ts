@@ -1,7 +1,8 @@
 import { HttpClient } from '@client/http-client'
 import { sleep } from '@client/retry-policy'
 import { getConfig, type AppConfig, type ServiceUrls } from '@config/app-config'
-import type { HealthReport, HealthStatus } from '@models/health'
+import type { HealthStatus } from '@models/health'
+import { healthReportSchema } from '@schemas/health.schema'
 
 export interface ServiceHealth {
   service: string
@@ -22,11 +23,8 @@ const probe = async (baseUrl: string, timeoutMs: number): Promise<ServiceHealth[
   const client = new HttpClient({ baseUrl, timeoutMs })
   try {
     const response = await client.request<unknown>({ method: 'GET', path: '/actuator/health' })
-    const body = response.data
-    if (typeof body === 'object' && body !== null && 'status' in body) {
-      return (body as HealthReport).status
-    }
-    return 'UNREACHABLE'
+    const report = healthReportSchema.safeParse(response.data)
+    return report.success ? report.data.status : 'UNREACHABLE'
   } catch {
     return 'UNREACHABLE'
   }

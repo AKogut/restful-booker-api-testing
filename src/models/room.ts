@@ -1,4 +1,8 @@
-export type RoomType = 'Single' | 'Twin' | 'Double' | 'Family' | 'Suite'
+export const ROOM_TYPES = ['Single', 'Twin', 'Double', 'Family', 'Suite'] as const
+
+export type RoomType = (typeof ROOM_TYPES)[number]
+
+export const ROOM_FEATURES = ['TV', 'WiFi', 'Safe', 'Radio', 'Views'] as const
 
 export interface Room {
   roomid: number
