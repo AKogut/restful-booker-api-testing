@@ -131,6 +131,12 @@ It could only hide in a test that treats a throw as success. Every other `room.c
 
 That was a limit of the `it.fails` idiom itself: it accepted _any_ failure, so it could not distinguish "the defect is still present" from "the request never completed". Timing evidence was the only thing that exposed it. The idiom has since been [replaced](#why-not-itfails), and the first live run under the replacement immediately turned up a third instance — the BUG-012 guard, which had never once observed the `500` it claimed to document.
 
+### How the CI-only room failures resolved (#67)
+
+The original signature — `POST /room` **create** returning `500` in CI while green locally — was traced to the room service rejecting the token CI had obtained, under the burst of **21 logins per run** (one `adminToken()` per test file). The shared-token change removed that burst: `globalSetup` performs one login per run and every suite takes it via `sharedToken()`. The create-`500` has not recurred in 30 subsequent `main` runs, and a bounded live measurement of 25 sequential creates returned `200` every time at a 0.23 s maximum — the normal write path is neither slow nor flaky. The ~31 s slow-`500` measured along the way was the oversized-`description` path ([BUG-012](bug-reports/BUG-012-oversized-input-returns-500.md)), a distinct pathological input, not ordinary creation.
+
+The CI reds that remain are a different, understood pair: a `GET` on a room another suite deleted mid-test returns `500` ([BUG-002](bug-reports/BUG-002-deleted-room-returns-500.md)'s missing-room behaviour under live concurrency), and the occasional transient connection blip the readiness gate and retry absorb. [#67](https://github.com/AKogut/restful-booker-api-testing/issues/67) is closed on that evidence — and if the signature ever returns, the exchange log now uploaded on failure and the raised `testTimeout` mean it will name its own cause.
+
 ## Targets
 
 | Target  | Command              | Purpose                                                          |
@@ -174,8 +180,8 @@ The functional suites assert correctness; they say nothing about behaviour under
 
 k6 runs on its own concurrency engine rather than the Vitest `HttpClient`, so it generates real parallel load; the scripts stay TypeScript, type-checked against `@types/k6` and gated in CI.
 
-## Still open
+## Status
 
-Everything planned has now shipped — functional suites, consumer contracts, security and ZAP, the dockerized target with its nightly drift run, and this performance layer.
+Every planned layer has shipped — functional suites, consumer contracts, security and ZAP, the dockerized target with its nightly drift run, and the performance smoke — and the milestones (M0–M10) are all closed. The last diagnostic thread, [#67](https://github.com/AKogut/restful-booker-api-testing/issues/67), was closed on evidence rather than a guess ([above](#how-the-ci-only-room-failures-resolved-67)).
 
-Two diagnostic threads stay deliberately open rather than being closed on a guess: [#67](https://github.com/AKogut/restful-booker-api-testing/issues/67), the unexplained `POST /room` stalls.
+What remains is upkeep: Dependabot proposes dependency and action updates, and the nightly live, drift, security and performance jobs report continuously against a target that changes underneath them.
