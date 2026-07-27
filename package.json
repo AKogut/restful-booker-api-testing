@@ -55,7 +55,7 @@
     "@faker-js/faker": "^10.5.0",
     "@pact-foundation/pact": "^17.0.1",
     "@types/k6": "^2.0.1",
-    "@types/node": "^22.10.0",
+    "@types/node": "^26.1.1",
     "@vitest/coverage-v8": "^3.0.0",
     "allure-commandline": "^2.43.0",
     "allure-vitest": "^3.10.2",
