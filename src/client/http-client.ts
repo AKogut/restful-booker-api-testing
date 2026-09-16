@@ -206,6 +206,7 @@ export class HttpClient {
       attempt,
       ...(meta === undefined ? {} : { durationMs: performance.now() - meta.startedAt }),
       error: apiError.message,
+      ...(apiError.code === undefined ? {} : { code: apiError.code }),
     })
   }
 

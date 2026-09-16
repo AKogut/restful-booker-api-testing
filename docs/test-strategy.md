@@ -127,7 +127,7 @@ The live platform occasionally stops accepting the run's shared admin token part
 - still valid → the response was genuine and is returned unchanged; nothing is replayed,
 - no longer valid → it logs in once, replays that request once with the new token, and every later request in the worker sends the new token up front.
 
-It never touches a token a test chose itself — the invalid, tampered and logged-out tokens the negative and security suites send are compared against the shared token and ignored, so no authorization assertion can be satisfied by a renewal. Concurrent rejections share one login. Each renewal prints a warning, and the replayed exchange carries `sessionRenewed: true` in the exchange log, which `npm run diagnose:exchanges` counts — a run that needed it says so.
+It never touches a token a test chose itself — the invalid, tampered and logged-out tokens the negative and security suites send are compared against the shared token and ignored, so no authorization assertion can be satisfied by a renewal. Concurrent rejections share one login. If the check itself fails in transit — which happened on a slow `500` from the BUG-012 path, where the platform dropped the follow-up `validate` — the original response is returned with a warning rather than turning a genuine answer into a transport error. Each renewal prints a warning, and the replayed exchange carries `sessionRenewed: true` in the exchange log, which `npm run diagnose:exchanges` counts — a run that needed it says so.
 
 ### What the exchange log established about the "CI-only" failures
 
