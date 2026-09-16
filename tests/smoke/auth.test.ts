@@ -66,12 +66,16 @@ describe('auth service @smoke', () => {
     }
   })
 
-  guardsDefect('BUG-001', 'invalidates the token after logout', async () => {
-    const token = await adminToken()
-    await auth.logout(token)
+  guardsDefect('BUG-001', 'invalidates the token after logout', {
+    reproduce: async () => {
+      const token = await adminToken()
+      const logout = await auth.logout(token)
+      expect(logout.status).toBe(200)
 
-    const response = await auth.validate(token)
-
-    expect(response.status).toBe(expectedStatus('auth.tokenInvalid'))
+      return auth.validate(token)
+    },
+    expectCorrect: (response) => {
+      expect(response.status).toBe(expectedStatus('auth.tokenInvalid'))
+    },
   })
 })

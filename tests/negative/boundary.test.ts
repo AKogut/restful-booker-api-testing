@@ -67,14 +67,19 @@ describe('booking boundary @negative', () => {
     }
   })
 
-  guardsDefect('BUG-005', 'rejects a booking for a non-existent room', async () => {
-    const response = await booking.create(bookingPayload(999_999))
+  guardsDefect('BUG-005', 'rejects a booking for a non-existent room', {
+    reproduce: async () => {
+      const response = await booking.create(bookingPayload(999_999))
 
-    const created = createdBooking(response.data)
-    if (created !== undefined) {
-      createdBookingIds.add(created.bookingid)
-    }
-    expect(response.status).toBe(404)
+      const created = createdBooking(response.data)
+      if (created !== undefined) {
+        createdBookingIds.add(created.bookingid)
+      }
+      return response
+    },
+    expectCorrect: (response) => {
+      expect(response.status).toBe(404)
+    },
   })
 })
 

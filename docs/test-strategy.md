@@ -60,25 +60,34 @@ This keeps defects visible instead of silently accommodated, and makes a platfor
 
 The guards were originally `it.fails`. That idiom inverts the outcome, so **any** failure satisfies it — including a transport timeout. A guard written to prove "the platform still returns the wrong status" also passed when the request never completed, which is a green result that proves nothing. It happened three times: [BUG-009](bug-reports/BUG-009-report-stalls-on-invalid-token.md) was found this way, a hung `POST /room` was later absorbed by the BUG-007 guard, and switching idiom immediately exposed a third — see below.
 
-The replacement keeps the correct expectation in the test body and classifies the failure instead of inverting it:
+The replacement keeps the correct expectation in the test and classifies the failure instead of inverting it. A guard has two parts: `reproduce` performs the setup and the call under test, and `expectCorrect` asserts the behaviour the platform should have:
 
 ```ts
-guardsDefect('BUG-002', 'returns 404 for a deleted room', async () => {
-  const response = await room.getById(created.roomid)
+guardsDefect('BUG-002', 'returns 404 for a deleted room', {
+  reproduce: async () => {
+    const created = await createRoom(roomPayload())
+    const deletion = await room.delete(created.roomid, token)
+    expect(deletion.status).toBe(202)
+    createdRoomIds.forget(created.roomid)
 
-  expect(response.status).toBe(404)
+    return room.getById(created.roomid)
+  },
+  expectCorrect: (response) => {
+    expect(response.status).toBe(404)
+  },
 })
 ```
 
-`observeDefect` runs the body and looks at what came out:
+`observeDefect` runs the two parts and looks at what came out:
 
-| Outcome                      | Meaning                                        | Result                               |
-| ---------------------------- | ---------------------------------------------- | ------------------------------------ |
-| `AssertionError`             | the defect still reproduces                    | **pass**                             |
-| nothing thrown               | the expectation now holds                      | **fail** — named, with the report id |
-| `ApiError`, or anything else | the request never completed, or the test broke | **fail**                             |
+| Outcome                                       | Meaning                                         | Result                               |
+| --------------------------------------------- | ----------------------------------------------- | ------------------------------------ |
+| `AssertionError` from `expectCorrect`         | the defect still reproduces                     | **pass**                             |
+| nothing thrown                                | the expectation now holds                       | **fail** — named, with the report id |
+| anything thrown by `reproduce`                | the setup broke, so the defect was not observed | **fail**                             |
+| `ApiError` or any other error from either one | the request never completed, or the test broke  | **fail**                             |
 
-So a timeout is a failure, an unexpected `TypeError` is a failure, and a platform fix is a failure that says which report to close. The correct behaviour stays written down as the assertion — the property that made `it.fails` attractive — while the outcome is no longer inverted.
+So a timeout is a failure, an unexpected `TypeError` is a failure, and a platform fix is a failure that says which report to close. The split matters as much as the classification. When the body was a single function, a failed setup assertion (a room that was not created, a delete that did not succeed) was also an `AssertionError`, and it passed as "defect still present" without the defect ever being reached. Only `expectCorrect` can now make a guard pass. The correct behaviour stays written down as the assertion — the property that made `it.fails` attractive — while the outcome is no longer inverted.
 
 Characterisation tests (`expect(status).toBe(500)`) were the other candidate. They fail on a timeout too, but they encode the wrong value as the expectation, and when the platform is fixed the assertion has to be rewritten rather than simply un-guarded. This approach keeps the expectation correct and still fails for the right reasons.
 
