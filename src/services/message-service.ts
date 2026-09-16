@@ -2,6 +2,7 @@ import type { ApiResponse, HttpClient } from '@client/http-client'
 import { RequestBuilder } from '@client/request-builder'
 import type { Message, MessageList, MessagePayload, UnreadCount } from '@models/message'
 import type { SuccessResponse } from '@models/common'
+import { release } from '@support/run-registry'
 
 export class MessageService {
   constructor(private readonly client: HttpClient) {}
@@ -27,6 +28,12 @@ export class MessageService {
   }
 
   async delete(messageid: number, token?: string): Promise<ApiResponse<unknown>> {
-    return this.client.request(RequestBuilder.delete(`/${messageid}`).withToken(token).build())
+    const response = await this.client.request(
+      RequestBuilder.delete(`/${messageid}`).withToken(token).build(),
+    )
+    if (response.status < 400) {
+      release('message', messageid)
+    }
+    return response
   }
 }

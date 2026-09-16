@@ -147,6 +147,8 @@ Suites take the token synchronously with `sharedToken()` instead of logging in t
 
 Every suite still deletes what it created in `afterAll`; that is the fast path and it stays. The registry exists for the case `afterAll` never runs — a failed `beforeAll`, a timeout, a killed worker. `track()` appends to a file rather than an in-memory set precisely because the worker that created the resource may be the one that died, and the file survives it.
 
+Every delete the platform confirms appends a release marker for that resource, so the registry holds only what is still outstanding. Teardown therefore sends a `DELETE` only for resources a suite failed to clean up — not a second one for everything the suites already removed — and deletes the run's temporary directory with the file.
+
 Teardown is silent when the suites cleaned up after themselves, and reports only what it actually removed:
 
 ```
