@@ -152,6 +152,15 @@ describe('buildReport', () => {
     expect(report.byHost['rbp.test']?.count).toBe(1)
   })
 
+  it('counts every exchange per host, including those that never got a response', () => {
+    const report = buildReport([
+      exchange({ durationMs: 120 }),
+      failedExchange('Network failure: https://rbp.test/api/room'),
+    ])
+
+    expect(report.byHost['rbp.test']).toEqual({ count: 2, p95: 120 })
+  })
+
   it('reports auth exchanges separately', () => {
     const report = buildReport([
       exchange({ url: 'https://rbp.test/api/auth/login', method: 'POST' }),
