@@ -2,7 +2,7 @@ import { execFileSync } from 'node:child_process'
 import { CONSUMER, PACT_DIR, PROVIDER } from '../tests/pact/support/contract'
 import { contractBranch, contractVersion } from './support/contract-version'
 
-const CLI_IMAGE = 'pactfoundation/pact-cli:latest'
+const CLI_IMAGE = 'pactfoundation/pact-cli:1.5.0.5'
 
 const network = process.env.PACT_BROKER_NETWORK ?? 'pact_default'
 const brokerUrl = process.env.PACT_BROKER_INTERNAL_URL ?? 'http://pact-broker:9292'

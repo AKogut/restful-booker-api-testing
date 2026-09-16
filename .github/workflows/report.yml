@@ -20,6 +20,7 @@ jobs:
   test-and-report:
     name: Test and publish Allure report
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     environment:
       name: github-pages
       url: ${{ steps.deploy.outputs.page_url }}

@@ -14,7 +14,7 @@ services:
       retries: 20
 
   pact-broker:
-    image: pactfoundation/pact-broker:latest
+    image: pactfoundation/pact-broker:2.143.0-pactbroker2.121.0
     ports:
       - '127.0.0.1:9292:9292'
     depends_on:
