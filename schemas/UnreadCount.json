@@ -1,18 +1,15 @@
 {
-  "$ref": "#/definitions/UnreadCount",
-  "definitions": {
-    "UnreadCount": {
-      "type": "object",
-      "properties": {
-        "count": {
-          "type": "integer"
-        }
-      },
-      "required": [
-        "count"
-      ],
-      "additionalProperties": false
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "type": "object",
+  "properties": {
+    "count": {
+      "type": "integer",
+      "minimum": -9007199254740991,
+      "maximum": 9007199254740991
     }
   },
-  "$schema": "http://json-schema.org/draft-07/schema#"
+  "required": [
+    "count"
+  ],
+  "additionalProperties": false
 }

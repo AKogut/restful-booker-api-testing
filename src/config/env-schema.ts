@@ -1,6 +1,6 @@
 import { z } from 'zod'
 
-const serviceUrl = z.string().url()
+const serviceUrl = z.url()
 
 export const envSchema = z.object({
   TEST_MODE: z.enum(['live', 'local']).default('live'),
