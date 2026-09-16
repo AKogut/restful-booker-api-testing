@@ -46,6 +46,23 @@ describe('toDiagnostic', () => {
     })
   })
 
+  it('keeps the transport error and its code for a failed exchange', () => {
+    const diagnostic = toDiagnostic({
+      correlationId: 'c1',
+      method: 'GET',
+      url: 'https://rbp.test/api/message',
+      durationMs: 30,
+      attempt: 1,
+      error: 'Network failure: https://rbp.test/api/message',
+      code: 'ECONNRESET',
+    })
+
+    expect(diagnostic).toMatchObject({
+      error: 'Network failure: https://rbp.test/api/message',
+      code: 'ECONNRESET',
+    })
+  })
+
   it('drops bodies and headers so no payload reaches the artifact', () => {
     const diagnostic = toDiagnostic({
       correlationId: 'c1',
@@ -150,6 +167,16 @@ describe('buildReport', () => {
 
     expect(Object.keys(report.byHost).sort()).toEqual(['127.0.0.1:5000', 'rbp.test'])
     expect(report.byHost['rbp.test']?.count).toBe(1)
+  })
+
+  it('names the transport error code of a failed exchange', () => {
+    const report = buildReport([
+      { ...failedExchange('Network failure: https://rbp.test/api/room', 40), code: 'ECONNRESET' },
+    ])
+
+    expect(formatReport(report)).toContain(
+      'Network failure: https://rbp.test/api/room [ECONNRESET] after 40ms',
+    )
   })
 
   it('counts requests replayed after a session renewal', () => {

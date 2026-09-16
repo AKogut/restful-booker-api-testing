@@ -1,3 +1,4 @@
+import { ApiError } from '@client/api-error'
 import { HttpClient, type SessionRecovery } from '@client/http-client'
 import { getConfig } from '@config/app-config'
 import type { AuthCredentials } from '@models/auth'
@@ -49,10 +50,24 @@ export class AdminSession implements SessionRecovery {
     if (this.origin === undefined || token !== this.current(this.origin)) {
       return Promise.resolve(undefined)
     }
-    this.pending ??= this.renew(token).finally(() => {
+    this.pending ??= this.renewOrKeep(token).finally(() => {
       this.pending = undefined
     })
     return this.pending
+  }
+
+  private async renewOrKeep(token: string): Promise<string | undefined> {
+    try {
+      return await this.renew(token)
+    } catch (error) {
+      if (!(error instanceof ApiError)) {
+        throw error
+      }
+      console.warn(
+        `Could not check whether the platform still accepts the shared admin token (${error.message}); kept the original response`,
+      )
+      return undefined
+    }
   }
 
   private async renew(token: string): Promise<string | undefined> {

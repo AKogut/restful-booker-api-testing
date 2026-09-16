@@ -151,7 +151,9 @@ export const formatReport = (report: ExchangeReport): string => {
   if (report.failures.length > 0) {
     line(`Transport failures: ${report.failures.length}`)
     for (const entry of report.failures) {
-      line(`  ${entry.error} after ${entry.durationMs ?? '?'}ms (attempt ${entry.attempt ?? 1})`)
+      line(
+        `  ${entry.error}${entry.code === undefined ? '' : ` [${entry.code}]`} after ${entry.durationMs ?? '?'}ms (attempt ${entry.attempt ?? 1})`,
+      )
     }
     line('')
   }

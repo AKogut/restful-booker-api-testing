@@ -152,6 +152,7 @@ describe('HttpClient', () => {
     expect(entries).toHaveLength(1)
     expect(entries[0]).toMatchObject({ method: 'GET', url: `${baseUrl}/slow` })
     expect(entries[0]?.error).toMatch(/timed out/)
+    expect(entries[0]?.code).toBe('ECONNABORTED')
   })
 
   it('normalizes timeouts into ApiError', async () => {

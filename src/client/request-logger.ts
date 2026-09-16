@@ -41,6 +41,7 @@ export interface ExchangeLogEntry {
   requestBody?: unknown
   responseBody?: unknown
   error?: string
+  code?: string
 }
 
 export type ExchangeLogger = (entry: ExchangeLogEntry) => void
@@ -60,6 +61,7 @@ export interface ExchangeDiagnostic {
   attempt?: number
   sessionRenewed?: boolean
   error?: string
+  code?: string
 }
 
 export const toDiagnostic = (entry: ExchangeLogEntry): ExchangeDiagnostic => ({
@@ -71,6 +73,7 @@ export const toDiagnostic = (entry: ExchangeLogEntry): ExchangeDiagnostic => ({
   ...(entry.attempt === undefined ? {} : { attempt: entry.attempt }),
   ...(entry.sessionRenewed === true ? { sessionRenewed: true } : {}),
   ...(entry.error === undefined ? {} : { error: entry.error }),
+  ...(entry.code === undefined ? {} : { code: entry.code }),
 })
 
 export const fileExchangeLogger: ExchangeLogger = (entry) => {
