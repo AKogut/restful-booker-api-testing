@@ -2,7 +2,7 @@ import { createServer, type IncomingMessage, type Server } from 'node:http'
 import type { AddressInfo } from 'node:net'
 import { afterAll, beforeAll, describe, expect, it } from 'vitest'
 import { ApiError } from '@client/api-error'
-import { HttpClient, resolveUrl } from '@client/http-client'
+import { HttpClient, resolveUrl, type SessionRecovery } from '@client/http-client'
 import type { ExchangeLogEntry } from '@client/request-logger'
 
 interface RecordedRequest {
@@ -32,6 +32,12 @@ const startStubServer = async (): Promise<void> => {
           response.writeHead(200, { 'content-type': 'application/json' })
           response.end('{}')
         }, 500)
+        return
+      }
+      if (request.url?.startsWith('/guarded')) {
+        const accepted = request.headers.cookie === 'token=renewed'
+        response.writeHead(accepted ? 201 : 403, { 'content-type': 'application/json' })
+        response.end(JSON.stringify(accepted ? { created: true } : { error: 'Forbidden' }))
         return
       }
       if (request.url?.startsWith('/forbidden')) {
@@ -194,6 +200,93 @@ describe('HttpClient', () => {
     const apiError = error as ApiError
     expect(apiError.url).toBe(`${baseUrl}/slow`)
     expect(apiError.message.replace('://', '')).not.toContain('//')
+  })
+})
+
+describe('HttpClient session recovery', () => {
+  const recoveringSession = (
+    replacement: string | undefined,
+  ): SessionRecovery & {
+    recovered: string[]
+  } => {
+    const recovered: string[] = []
+    const replacements = new Map<string, string>()
+    return {
+      recovered,
+      current: (token) => replacements.get(token) ?? token,
+      recover: (token) => {
+        recovered.push(token)
+        if (replacement !== undefined) {
+          replacements.set(token, replacement)
+        }
+        return Promise.resolve(replacement)
+      },
+    }
+  }
+
+  it('replays a rejected request once with the renewed token and marks the exchange', async () => {
+    const entries: ExchangeLogEntry[] = []
+    const session = recoveringSession('renewed')
+    const client = new HttpClient({
+      baseUrl,
+      timeoutMs: 2000,
+      session,
+      logger: (entry) => entries.push(entry),
+    })
+
+    const response = await client.request({
+      method: 'POST',
+      path: '/guarded',
+      headers: { Cookie: 'token=revoked' },
+    })
+
+    expect(response.status).toBe(201)
+    expect(session.recovered).toEqual(['revoked'])
+    expect(entries.map((entry) => [entry.status, entry.sessionRenewed])).toEqual([
+      [403, undefined],
+      [201, true],
+    ])
+  })
+
+  it('sends the renewed token up front once a replacement is known', async () => {
+    const session = recoveringSession('renewed')
+    const client = new HttpClient({ baseUrl, timeoutMs: 2000, session })
+    await client.request({ method: 'POST', path: '/guarded', headers: { Cookie: 'token=revoked' } })
+    const before = recorded.length
+
+    const response = await client.request({
+      method: 'POST',
+      path: '/guarded',
+      headers: { Cookie: 'token=revoked' },
+    })
+
+    expect(response.status).toBe(201)
+    expect(recorded.length - before).toBe(1)
+    expect(recorded.at(-1)?.headers.cookie).toBe('token=renewed')
+  })
+
+  it('returns the original rejection when the session does not renew the token', async () => {
+    const session = recoveringSession(undefined)
+    const client = new HttpClient({ baseUrl, timeoutMs: 2000, session })
+
+    const response = await client.request({
+      method: 'POST',
+      path: '/guarded',
+      headers: { Cookie: 'token=still-valid' },
+    })
+
+    expect(response.status).toBe(403)
+    expect(session.recovered).toEqual(['still-valid'])
+  })
+
+  it('does not consult the session for requests without a token or with an accepted status', async () => {
+    const session = recoveringSession('renewed')
+    const client = new HttpClient({ baseUrl, timeoutMs: 2000, session })
+
+    await client.request({ method: 'GET', path: '/forbidden' })
+    await client.request({ method: 'POST', path: '/room', headers: { Cookie: 'token=fine' } })
+
+    expect(session.recovered).toEqual([])
   })
 })
 

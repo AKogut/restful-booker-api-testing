@@ -36,6 +36,7 @@ export interface ExchangeLogEntry {
   status?: number
   durationMs?: number
   attempt?: number
+  sessionRenewed?: boolean
   requestHeaders?: unknown
   requestBody?: unknown
   responseBody?: unknown
@@ -57,6 +58,7 @@ export interface ExchangeDiagnostic {
   status?: number
   durationMs?: number
   attempt?: number
+  sessionRenewed?: boolean
   error?: string
 }
 
@@ -67,6 +69,7 @@ export const toDiagnostic = (entry: ExchangeLogEntry): ExchangeDiagnostic => ({
   ...(entry.status === undefined ? {} : { status: entry.status }),
   ...(entry.durationMs === undefined ? {} : { durationMs: Math.round(entry.durationMs) }),
   ...(entry.attempt === undefined ? {} : { attempt: entry.attempt }),
+  ...(entry.sessionRenewed === true ? { sessionRenewed: true } : {}),
   ...(entry.error === undefined ? {} : { error: entry.error }),
 })
 

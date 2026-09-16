@@ -6,6 +6,7 @@ export interface ExchangeReport {
   byStatus: Record<string, number>
   failures: ExchangeDiagnostic[]
   retried: number
+  sessionRenewals: number
   transient: ExchangeDiagnostic[]
   byHost: Record<string, { count: number; p95: number }>
   authExchanges: ExchangeDiagnostic[]
@@ -91,6 +92,7 @@ export const buildReport = (exchanges: ExchangeDiagnostic[], slowestCount = 10):
     byStatus,
     failures: exchanges.filter((entry) => entry.error !== undefined),
     retried: exchanges.filter((entry) => (entry.attempt ?? 1) > 1).length,
+    sessionRenewals: exchanges.filter((entry) => entry.sessionRenewed === true).length,
     transient: exchanges.filter(
       (entry) => entry.status !== undefined && isTransientStatus(entry.status),
     ),
@@ -117,6 +119,7 @@ export const formatReport = (report: ExchangeReport): string => {
     `Duration ms — p50 ${report.durations.p50}, p95 ${report.durations.p95}, max ${report.durations.max}`,
   )
   line(`Retried attempts: ${report.retried}`)
+  line(`Requests replayed after a session renewal: ${report.sessionRenewals}`)
   line('')
 
   line('By status:')

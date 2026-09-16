@@ -152,6 +152,17 @@ describe('buildReport', () => {
     expect(report.byHost['rbp.test']?.count).toBe(1)
   })
 
+  it('counts requests replayed after a session renewal', () => {
+    const report = buildReport([
+      exchange({ status: 403 }),
+      exchange({ status: 201, sessionRenewed: true }),
+      exchange(),
+    ])
+
+    expect(report.sessionRenewals).toBe(1)
+    expect(formatReport(report)).toContain('Requests replayed after a session renewal: 1')
+  })
+
   it('counts every exchange per host, including those that never got a response', () => {
     const report = buildReport([
       exchange({ durationMs: 120 }),

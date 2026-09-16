@@ -1,6 +1,7 @@
 import { HttpClient } from '@client/http-client'
 import { NO_RETRY, type RetryPolicy } from '@client/retry-policy'
 import { getConfig, type AppConfig } from '@config/app-config'
+import { adminSession } from '@support/admin-session'
 import { AuthService } from './auth-service'
 import { BookingService } from './booking-service'
 import { BrandingService } from './branding-service'
@@ -22,7 +23,7 @@ export const createServices = (
   retry: RetryPolicy = config.retry,
 ): Services => {
   const clientFor = (baseUrl: string): HttpClient =>
-    new HttpClient({ baseUrl, timeoutMs: config.timeoutMs, retry })
+    new HttpClient({ baseUrl, timeoutMs: config.timeoutMs, retry, session: adminSession() })
 
   return {
     auth: new AuthService(clientFor(config.services.auth)),
