@@ -20,9 +20,18 @@ export type DefectVerdict = 'present' | 'fixed'
 const isAssertionFailure = (error: unknown): boolean =>
   error instanceof Error && error.name === 'AssertionError'
 
-export const observeDefect = async (body: () => Promise<void>): Promise<DefectVerdict> => {
+export interface DefectReproduction<Observation> {
+  reproduce: () => Promise<Observation>
+  expectCorrect: (observation: Observation) => void
+}
+
+export const observeDefect = async <Observation>({
+  reproduce,
+  expectCorrect,
+}: DefectReproduction<Observation>): Promise<DefectVerdict> => {
+  const observation = await reproduce()
   try {
-    await body()
+    expectCorrect(observation)
   } catch (error) {
     if (isAssertionFailure(error)) {
       return 'present'

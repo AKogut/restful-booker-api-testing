@@ -117,14 +117,13 @@ describe('oversized input @security', () => {
   guardsDefect(
     'BUG-012',
     'rejects an oversized description cleanly instead of crashing',
-    async () => {
-      const response = await patient.room.create(
-        asPayload({ ...roomPayload(), description: 'A'.repeat(5000) }),
-        token,
-      )
-
-      expect(response.status).toBeGreaterThanOrEqual(400)
-      expect(response.status).toBeLessThan(500)
+    {
+      reproduce: () =>
+        patient.room.create(asPayload({ ...roomPayload(), description: 'A'.repeat(5000) }), token),
+      expectCorrect: (response) => {
+        expect(response.status).toBeGreaterThanOrEqual(400)
+        expect(response.status).toBeLessThan(500)
+      },
     },
     PATIENT_TIMEOUT_MS,
   )

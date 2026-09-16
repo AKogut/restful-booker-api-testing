@@ -53,12 +53,16 @@ describe('branding service @smoke', () => {
     expect(response.status).toBe(expectedStatus('authz.missingToken.report'))
   })
 
-  guardsDefect('BUG-006', 'accepts its own payload back on update', async () => {
-    const current = await branding.get()
+  guardsDefect('BUG-006', 'accepts its own payload back on update', {
+    reproduce: async () => {
+      const current = await branding.get()
+      expect(current.status).toBe(200)
 
-    const response = await branding.update(current.data, token)
-
-    expect(response.status).toBe(202)
+      return branding.update(current.data, token)
+    },
+    expectCorrect: (response) => {
+      expect(response.status).toBe(202)
+    },
   })
 })
 

@@ -96,27 +96,30 @@ describe('invalid token handling @negative', () => {
   ]
 
   for (const [endpoint, call] of invalidTokenCalls) {
-    guardsDefect('BUG-007', `rejects ${endpoint} carrying an invalid token`, async () => {
-      const response = await call()
-
-      expect(response.status).toBe(401)
+    guardsDefect('BUG-007', `rejects ${endpoint} carrying an invalid token`, {
+      reproduce: call,
+      expectCorrect: (response) => {
+        expect(response.status).toBe(401)
+      },
     })
   }
 
   guardsDefect(
     'BUG-009',
     'rejects report.get carrying an invalid token instead of stalling',
-    async () => {
-      const response = await patient.report.get(INVALID_TOKEN)
-
-      expect(response.status).toBe(401)
+    {
+      reproduce: () => patient.report.get(INVALID_TOKEN),
+      expectCorrect: (response) => {
+        expect(response.status).toBe(401)
+      },
     },
     PATIENT_TIMEOUT_MS,
   )
 
-  guardsDefect('BUG-008', 'rejects booking.summary carrying an invalid token', async () => {
-    const response = await booking.summary(ANY_ID, INVALID_TOKEN)
-
-    expect(response.status).toBe(401)
+  guardsDefect('BUG-008', 'rejects booking.summary carrying an invalid token', {
+    reproduce: () => booking.summary(ANY_ID, INVALID_TOKEN),
+    expectCorrect: (response) => {
+      expect(response.status).toBe(401)
+    },
   })
 })

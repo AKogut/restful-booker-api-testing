@@ -115,11 +115,14 @@ describe('message service @smoke', () => {
     expect(response.status).toBe(expectedStatus('authz.forbidden'))
   })
 
-  guardsDefect('BUG-004', 'protects the inbox from anonymous reads', async () => {
-    const id = await createMessage(messagePayload())
+  guardsDefect('BUG-004', 'protects the inbox from anonymous reads', {
+    reproduce: async () => {
+      const id = await createMessage(messagePayload())
 
-    const response = await message.getById(id)
-
-    expect(response.status).toBe(401)
+      return message.getById(id)
+    },
+    expectCorrect: (response) => {
+      expect(response.status).toBe(401)
+    },
   })
 })

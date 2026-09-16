@@ -93,14 +93,18 @@ describe('room service @smoke', () => {
     expect(listing.data.rooms.map((entry) => entry.roomid)).not.toContain(created.roomid)
   })
 
-  guardsDefect('BUG-002', 'returns 404 for a deleted room', async () => {
-    const created = await createRoom(roomPayload())
-    await room.delete(created.roomid, token)
-    createdRoomIds.forget(created.roomid)
+  guardsDefect('BUG-002', 'returns 404 for a deleted room', {
+    reproduce: async () => {
+      const created = await createRoom(roomPayload())
+      const deletion = await room.delete(created.roomid, token)
+      expect(deletion.status).toBe(202)
+      createdRoomIds.forget(created.roomid)
 
-    const response = await room.getById(created.roomid)
-
-    expect(response.status).toBe(404)
+      return room.getById(created.roomid)
+    },
+    expectCorrect: (response) => {
+      expect(response.status).toBe(404)
+    },
   })
 
   it('rejects room creation without a token', async () => {

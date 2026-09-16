@@ -79,18 +79,20 @@ describe('secret non-leakage @security', () => {
 
 describe('response header hygiene @security', () => {
   for (const header of INFRA_HEADERS) {
-    guardsDefect('BUG-010', `does not leak the ${header} header`, async () => {
-      const response = await room.list()
-
-      expect(response.headers[header]).toBeUndefined()
+    guardsDefect('BUG-010', `does not leak the ${header} header`, {
+      reproduce: () => room.list(),
+      expectCorrect: (response) => {
+        expect(response.headers[header]).toBeUndefined()
+      },
     })
   }
 
   for (const header of SECURITY_HEADERS) {
-    guardsDefect('BUG-011', `sets the ${header} security header`, async () => {
-      const response = await room.list()
-
-      expect(response.headers[header]).toBeDefined()
+    guardsDefect('BUG-011', `sets the ${header} security header`, {
+      reproduce: () => room.list(),
+      expectCorrect: (response) => {
+        expect(response.headers[header]).toBeDefined()
+      },
     })
   }
 })

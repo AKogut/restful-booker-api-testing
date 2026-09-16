@@ -1,7 +1,7 @@
 import { readFileSync, readdirSync } from 'node:fs'
 import { join } from 'node:path'
 import { fileURLToPath } from 'node:url'
-import { describe, expect, it } from 'vitest'
+import { describe, expect, it, vi } from 'vitest'
 import { ApiError } from '@client/api-error'
 import { DEFECT_REPORTS, defectFixedMessage, observeDefect } from '@support/defect-guard'
 
@@ -26,35 +26,59 @@ const guardedReportIds = (): string[] => {
 }
 
 describe('observeDefect', () => {
-  it('reports the defect as present when the expectation fails', async () => {
-    const verdict = await observeDefect(() => {
-      expect(500).toBe(400)
-      return Promise.resolve()
+  it('reports the defect as present when the correct behaviour is not observed', async () => {
+    const verdict = await observeDefect({
+      reproduce: () => Promise.resolve(500),
+      expectCorrect: (status) => {
+        expect(status).toBe(400)
+      },
     })
 
     expect(verdict).toBe('present')
   })
 
-  it('reports the defect as fixed when the expectation holds', async () => {
-    const verdict = await observeDefect(() => {
-      expect(400).toBe(400)
-      return Promise.resolve()
+  it('reports the defect as fixed when the correct behaviour is observed', async () => {
+    const verdict = await observeDefect({
+      reproduce: () => Promise.resolve(400),
+      expectCorrect: (status) => {
+        expect(status).toBe(400)
+      },
     })
 
     expect(verdict).toBe('fixed')
   })
 
+  it('rethrows a failed reproduction assertion instead of counting it as the defect', async () => {
+    const expectCorrect = vi.fn()
+
+    await expect(
+      observeDefect({
+        reproduce: () => {
+          expect(403).toBe(201)
+          return Promise.resolve(403)
+        },
+        expectCorrect,
+      }),
+    ).rejects.toThrow('expected 403 to be 201')
+    expect(expectCorrect).not.toHaveBeenCalled()
+  })
+
   it('rethrows a transport failure instead of counting it as the defect', async () => {
     const timeout = new ApiError('Request timed out: /room', { method: 'POST', url: '/room' })
 
-    await expect(observeDefect(() => Promise.reject(timeout))).rejects.toThrow(
-      'Request timed out: /room',
-    )
+    await expect(
+      observeDefect({ reproduce: () => Promise.reject(timeout), expectCorrect: () => undefined }),
+    ).rejects.toThrow('Request timed out: /room')
   })
 
   it('rethrows an unexpected runtime error instead of counting it as the defect', async () => {
     await expect(
-      observeDefect(() => Promise.reject(new TypeError("Cannot use 'in' operator"))),
+      observeDefect({
+        reproduce: () => Promise.resolve({}),
+        expectCorrect: () => {
+          throw new TypeError("Cannot use 'in' operator")
+        },
+      }),
     ).rejects.toThrow(TypeError)
   })
 
