@@ -118,6 +118,17 @@ A shared demo produces two kinds of red that must not be conflated:
 
 Retries are deliberately narrow: idempotent methods only, transient statuses only, capped attempts, and disabled outright in the negative suites via `createServicesWithoutRetry()`. Every attempt is recorded in the exchange log, so a call that only passes on retry is visible rather than hidden — a retry policy that silently masks degradation would be worse than no retry at all.
 
+### Recovering a revoked admin session
+
+The live platform occasionally stops accepting the run's shared admin token part-way through a run ([#134](https://github.com/AKogut/restful-booker-api-testing/issues/134)): authenticated calls start returning `403`, `POST /room` returns `500`, fresh logins still succeed, and every suite that follows fails for a reason unrelated to what it tests. The trigger is outside this project and has not been confirmed; the failures coincided with overlapping live runs.
+
+`AdminSession` handles it narrowly. When a request carrying **the shared token** is answered with `401`, `403` or `500`, it asks the platform whether that token is still valid:
+
+- still valid → the response was genuine and is returned unchanged; nothing is replayed,
+- no longer valid → it logs in once, replays that request once with the new token, and every later request in the worker sends the new token up front.
+
+It never touches a token a test chose itself — the invalid, tampered and logged-out tokens the negative and security suites send are compared against the shared token and ignored, so no authorization assertion can be satisfied by a renewal. Concurrent rejections share one login. Each renewal prints a warning, and the replayed exchange carries `sessionRenewed: true` in the exchange log, which `npm run diagnose:exchanges` counts — a run that needed it says so.
+
 ### What the exchange log established about the "CI-only" failures
 
 Setting `HTTP_LOG_FILE` writes one compact record per HTTP exchange — method, url, status, duration, attempt — and `npm run diagnose:exchanges` summarises it. The live job in CI and the nightly Local Target run both write the log, and upload it as an artifact when the suite fails.

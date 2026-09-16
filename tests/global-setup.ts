@@ -5,6 +5,7 @@ import type { TestProject } from 'vitest/node'
 import { getConfig } from '@config/app-config'
 import { waitForPlatformReady } from '@health/health-check'
 import { createServices } from '@services/service-factory'
+import { adminSession } from '@support/admin-session'
 import { clearRegistry, readRegistry, type TrackedResource } from '@support/run-registry'
 import { adminToken } from '@support/session'
 
@@ -50,6 +51,7 @@ export default async function globalSetup(project: TestProject): Promise<() => P
       `The admin token issued at start-up was rejected with ${validation.status} — every suite would fail against it`,
     )
   }
+  adminSession().adopt(token)
   project.provide('adminToken', token)
 
   const path = join(mkdtempSync(join(tmpdir(), 'rbp-run-')), 'registry.jsonl')
