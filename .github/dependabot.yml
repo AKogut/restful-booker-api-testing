@@ -34,6 +34,12 @@ updates:
         update-types:
           - minor
           - patch
+      vitest-major:
+        patterns:
+          - 'vitest'
+          - '@vitest/*'
+        update-types:
+          - major
 
   - package-ecosystem: github-actions
     directory: /
