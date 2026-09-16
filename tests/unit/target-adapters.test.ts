@@ -132,10 +132,7 @@ describe('CreatedResources', () => {
       ledger.add(5)
       ledger.add(5)
 
-      expect(readRegistry(registry)).toEqual([
-        { kind: 'message', id: 5 },
-        { kind: 'message', id: 5 },
-      ])
+      expect(readRegistry(registry)).toEqual([{ kind: 'message', id: 5 }])
       expect(ledger.all()).toEqual([5])
     } finally {
       delete process.env.RUN_REGISTRY

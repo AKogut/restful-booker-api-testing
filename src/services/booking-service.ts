@@ -9,6 +9,7 @@ import type {
   UpdatedBooking,
 } from '@models/booking'
 import type { ErrorResponse, ErrorsResponse, ValidationErrorResponse } from '@models/common'
+import { release } from '@support/run-registry'
 
 export class BookingService {
   constructor(private readonly client: HttpClient) {}
@@ -49,6 +50,12 @@ export class BookingService {
   }
 
   async delete(bookingid: number, token?: string): Promise<ApiResponse<unknown>> {
-    return this.client.request(RequestBuilder.delete(`/${bookingid}`).withToken(token).build())
+    const response = await this.client.request(
+      RequestBuilder.delete(`/${bookingid}`).withToken(token).build(),
+    )
+    if (response.status < 400) {
+      release('booking', bookingid)
+    }
+    return response
   }
 }

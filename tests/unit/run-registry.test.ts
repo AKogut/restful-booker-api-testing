@@ -1,8 +1,8 @@
-import { mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
+import { existsSync, mkdtempSync, readFileSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
-import { join } from 'node:path'
+import { dirname, join } from 'node:path'
 import { afterEach, beforeEach, describe, expect, it } from 'vitest'
-import { clearRegistry, parseRegistry, readRegistry, track } from '@support/run-registry'
+import { clearRegistry, parseRegistry, readRegistry, release, track } from '@support/run-registry'
 
 let path: string
 
@@ -44,8 +44,38 @@ describe('readRegistry', () => {
     ])
   })
 
+  it('leaves out resources that were released after being tracked', () => {
+    track('room', 1)
+    track('booking', 2)
+    release('room', 1)
+
+    expect(readRegistry(path)).toEqual([{ kind: 'booking', id: 2 }])
+  })
+
+  it('lists a resource once however often it was tracked', () => {
+    track('message', 5)
+    track('message', 5)
+
+    expect(readRegistry(path)).toEqual([{ kind: 'message', id: 5 }])
+  })
+
+  it('ignores a release for a resource that was never tracked', () => {
+    track('room', 1)
+    release('booking', 7)
+
+    expect(readRegistry(path)).toEqual([{ kind: 'room', id: 1 }])
+  })
+
   it('returns nothing for a registry that was never created', () => {
     expect(readRegistry(join(tmpdir(), 'does-not-exist.jsonl'))).toEqual([])
+  })
+})
+
+describe('release', () => {
+  it('appends a release marker for the resource', () => {
+    release('room', 3)
+
+    expect(readFileSync(path, 'utf8')).toBe('{"kind":"room","id":3,"released":true}\n')
   })
 })
 
@@ -78,5 +108,11 @@ describe('clearRegistry', () => {
     clearRegistry(path)
 
     expect(readRegistry(path)).toEqual([])
+  })
+
+  it('removes the run directory once it is empty', () => {
+    clearRegistry(path)
+
+    expect(existsSync(dirname(path))).toBe(false)
   })
 })

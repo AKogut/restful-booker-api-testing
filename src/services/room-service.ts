@@ -2,6 +2,7 @@ import type { ApiResponse, HttpClient } from '@client/http-client'
 import { RequestBuilder } from '@client/request-builder'
 import type { ErrorsResponse, SuccessResponse } from '@models/common'
 import type { Room, RoomList, RoomPayload } from '@models/room'
+import { release } from '@support/run-registry'
 
 export class RoomService {
   constructor(private readonly client: HttpClient) {}
@@ -32,6 +33,12 @@ export class RoomService {
   }
 
   async delete(roomid: number, token?: string): Promise<ApiResponse<unknown>> {
-    return this.client.request(RequestBuilder.delete(`/${roomid}`).withToken(token).build())
+    const response = await this.client.request(
+      RequestBuilder.delete(`/${roomid}`).withToken(token).build(),
+    )
+    if (response.status < 400) {
+      release('room', roomid)
+    }
+    return response
   }
 }
