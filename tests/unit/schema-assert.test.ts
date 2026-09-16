@@ -22,13 +22,30 @@ describe('assertValid', () => {
   it('reports the offending path and value on failure', () => {
     const invalid = { ...validRoom, roomPrice: 'expensive' }
 
-    expect(() => assertValid(roomSchema, invalid)).toThrowError(/roomPrice/)
+    expect(() => assertValid(roomSchema, invalid)).toThrow(
+      /- roomPrice: Invalid input: expected number, received string/,
+    )
   })
 
   it('rejects unexpected fields under strict schemas', () => {
     const drifted = { ...validRoom, surprise: true }
 
-    expect(() => assertValid(roomSchema, drifted)).toThrowError(/surprise/)
+    expect(() => assertValid(roomSchema, drifted)).toThrow(/- <root>: Unrecognized key: "surprise"/)
+  })
+
+  it('rejects unexpected fields in nested strict objects', () => {
+    const booking = {
+      bookingid: 1,
+      roomid: 1,
+      firstname: 'James',
+      lastname: 'Dean',
+      depositpaid: true,
+      bookingdates: { checkin: '2026-02-01', checkout: '2026-02-05', extra: true },
+    }
+
+    expect(() => assertValid(bookingSchema, booking)).toThrow(
+      /- bookingdates: Unrecognized key: "extra"/,
+    )
   })
 
   it('rejects malformed ISO dates', () => {
@@ -41,6 +58,8 @@ describe('assertValid', () => {
       bookingdates: { checkin: '2026/02/01', checkout: '2026-02-05' },
     }
 
-    expect(() => assertValid(bookingSchema, booking)).toThrowError(/checkin/)
+    expect(() => assertValid(bookingSchema, booking)).toThrow(
+      /- bookingdates\.checkin: expected an ISO date \(YYYY-MM-DD\)/,
+    )
   })
 })

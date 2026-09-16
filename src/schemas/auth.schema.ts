@@ -1,7 +1,7 @@
 import { z } from 'zod'
 
-export const authTokenSchema = z.object({ token: z.string().min(1) }).strict()
+export const authTokenSchema = z.strictObject({ token: z.string().min(1) })
 
-export const tokenValidationSchema = z.object({ valid: z.boolean() }).strict()
+export const tokenValidationSchema = z.strictObject({ valid: z.boolean() })
 
-export const logoutResultSchema = z.object({ success: z.boolean() }).strict()
+export const logoutResultSchema = z.strictObject({ success: z.boolean() })

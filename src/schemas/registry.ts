@@ -28,4 +28,4 @@ export const schemaRegistry = {
   Branding: brandingSchema,
   Report: reportSchema,
   HealthReport: healthReportSchema,
-} satisfies Record<string, z.ZodTypeAny>
+} satisfies Record<string, z.ZodType>
