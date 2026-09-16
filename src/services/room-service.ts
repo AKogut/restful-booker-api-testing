@@ -17,7 +17,7 @@ export class RoomService {
   async create(
     payload: RoomPayload,
     token?: string,
-  ): Promise<ApiResponse<SuccessResponse | ErrorsResponse>> {
+  ): Promise<ApiResponse<SuccessResponse | Room | ErrorsResponse>> {
     return this.client.request(RequestBuilder.post('').withBody(payload).withToken(token).build())
   }
 

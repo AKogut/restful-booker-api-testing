@@ -52,22 +52,21 @@ const percentile = (sorted: number[], fraction: number): number => {
 const hostStats = (
   exchanges: ExchangeDiagnostic[],
 ): Record<string, { count: number; p95: number }> => {
-  const grouped = new Map<string, number[]>()
+  const grouped = new Map<string, ExchangeDiagnostic[]>()
   for (const entry of exchanges) {
     const host = hostOf(entry.url)
-    const durations = grouped.get(host) ?? []
-    if (typeof entry.durationMs === 'number') {
-      durations.push(entry.durationMs)
-    }
-    grouped.set(host, durations)
+    grouped.set(host, [...(grouped.get(host) ?? []), entry])
   }
   return Object.fromEntries(
-    [...grouped.entries()].map(([host, durations]) => [
+    [...grouped.entries()].map(([host, entries]) => [
       host,
       {
-        count: durations.length,
+        count: entries.length,
         p95: percentile(
-          [...durations].sort((a, b) => a - b),
+          entries
+            .map((entry) => entry.durationMs)
+            .filter((value): value is number => typeof value === 'number')
+            .sort((a, b) => a - b),
           0.95,
         ),
       },
