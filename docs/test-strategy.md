@@ -9,10 +9,10 @@ Verify the Restful Booker Platform API — six independent Spring Boot services 
 | In scope                                                         | Out of scope                                     |
 | ---------------------------------------------------------------- | ------------------------------------------------ |
 | REST contracts of auth, room, booking, message, branding, report | Web UI behaviour                                 |
-| Authentication and authorization rules                           | Load and stress profiles (planned: k6)           |
-| Business rules (availability, double-booking)                    | Database-level assertions                        |
-| Response schemas and cross-service consistency                   | Third-party infrastructure (Cloudflare, Railway) |
-| Latency and error-rate budgets under load (k6 smoke)             | Sustained stress/soak profiles                   |
+| Authentication and authorization rules                           | Database-level assertions                        |
+| Business rules (availability, double-booking)                    | Third-party infrastructure (Cloudflare, Railway) |
+| Response schemas and cross-service consistency                   | Sustained stress/soak profiles                   |
+| Latency and error-rate budgets under load (k6 smoke)             |                                                  |
 
 ## Risk-based prioritisation
 
@@ -54,7 +54,7 @@ Every confirmed platform defect gets:
 1. a report in [`docs/bug-reports/`](bug-reports/) with repro steps, evidence, impact and severity,
 2. a `guardsDefect` test that encodes the **expected correct behaviour**.
 
-This keeps defects visible instead of silently accommodated, and makes a platform fix surface immediately as a failing test rather than going unnoticed. Most guards are gated on `defects.documented` and run only against the target whose behaviour they document; the header findings (BUG-010, BUG-011) are deployment-specific and gated the same way.
+This keeps defects visible instead of silently accommodated, and makes a platform fix surface immediately as a failing test rather than going unnoticed. Every guard is gated on `defects.documented` and runs only against the target whose behaviour it documents — including the header findings (BUG-010, BUG-011), which are specific to the deployment.
 
 ### Why not `it.fails`
 
@@ -105,7 +105,7 @@ The target is a public demo mutated by other users at any time. The suite theref
 - generates non-overlapping booking windows by construction,
 - asserts per-entity state instead of global counters,
 - cleans up every created room, booking and message in `afterAll`, with a run-level registry sweeping anything a crashed suite left behind,
-- never performs an irreversible mutation of shared state (for example, branding updates are only exercised where the request is rejected).
+- never performs an irreversible mutation of shared state (for example, branding is only written back with its own current values, or in a request that is rejected).
 
 ## Separating infrastructure noise from defects
 
@@ -120,7 +120,7 @@ Retries are deliberately narrow: idempotent methods only, transient statuses onl
 
 ### What the exchange log established about the "CI-only" failures
 
-Setting `HTTP_LOG_FILE` writes one compact record per HTTP exchange — method, url, status, duration, attempt — and `npm run diagnose:exchanges` summarises it. CI writes the log on every live run and uploads it as an artifact when the job fails.
+Setting `HTTP_LOG_FILE` writes one compact record per HTTP exchange — method, url, status, duration, attempt — and `npm run diagnose:exchanges` summarises it. The live job in CI and the nightly Local Target run both write the log, and upload it as an artifact when the suite fails.
 
 A local baseline over a full suite (549 exchanges) gave the reference profile:
 
@@ -159,7 +159,7 @@ They run **different versions of the same API**, so expectations are declared pe
 
 ### The local target runs nightly, not on pull requests
 
-20 of the 140 tests skip against `local` — 16 defect-guard instances (the twelve guards, some fanned out over headers or endpoints) plus 4 capability-gated assertions. Gating merges on a run with a seventh of its assertions switched off would trade a real signal for a fast one.
+20 of the 144 tests skip against `local` — 16 defect-guard instances (the twelve guards, some fanned out over headers or endpoints) plus 4 capability-gated assertions. Gating merges on a run with a seventh of its assertions switched off would trade a real signal for a fast one.
 
 It is still worth running on a schedule, because its value is orthogonal to the PR gate: it detects the two targets **drifting further apart**, which is otherwise something we would only notice by accident. The `Local Target` workflow brings the stack up nightly, runs every live suite against it sequentially, and publishes its JUnit results under a separate artifact name so the two targets are never conflated. A failure means either the containers regressed or a new divergence appeared — the latter belongs in [target-differences.md](target-differences.md).
 

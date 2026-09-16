@@ -45,8 +45,7 @@
     "prepare": "husky",
     "diagnose:exchanges": "tsx scripts/summarize-exchanges.ts",
     "perf:typecheck": "tsc -p perf/tsconfig.json --noEmit",
-    "perf:smoke": "k6 run perf/smoke.ts",
-    "perf:smoke:live": "PERF_TARGET=live k6 run perf/smoke.ts"
+    "perf:smoke": "k6 run perf/smoke.ts"
   },
   "devDependencies": {
     "@commitlint/cli": "^21.2.2",
