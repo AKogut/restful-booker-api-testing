@@ -17,10 +17,10 @@ The infrastructure-header leak, [BUG-010](bug-reports/BUG-010-infrastructure-hea
 
 [`.github/workflows/security-scan.yml`](../.github/workflows/security-scan.yml):
 
-1. Brings the six services up with `docker compose`, waiting on each service's context-path health endpoint.
-2. Runs `zap-baseline.py` against the room service on the shared Docker network.
+1. Pulls the images with a bounded retry, so a transient registry error does not fail the scan before it starts, then brings the six services up with `docker compose`, waiting on each service's context-path health endpoint.
+2. Runs `zap-baseline.py` against the room service from a container on the runner's host network (`--network host`), reaching it at `localhost:3001` exactly as the test suites do.
 3. Uploads the HTML, Markdown and JSON reports as the `zap-baseline-report` artifact, and **fails if there is nothing to upload** — a scan that produces no report is a failed scan, not a green one.
-4. Fails the run only on **FAIL-level** alerts; warnings are recorded in the artifact but do not break the build.
+4. Fails the run on **FAIL-level** alerts (ZAP exit `1`), and separately on any other non-zero exit, which means ZAP could not complete the scan. Warnings are recorded in the artifact but do not break the build.
 
 The report directory is made world-writable before the scan. The ZAP container runs as its own user, so a directory created by the runner is not writable from inside it — on a Linux runner that produces `AccessDeniedException` and no report. Docker Desktop on macOS maps permissions loosely enough to hide this, so it only appears in CI.
 
@@ -46,4 +46,4 @@ docker run --network host -v "$PWD:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
 npm run docker:down
 ```
 
-The report lands in `zap-report/` (gitignored).
+The report lands in `zap-report/` (gitignored). Host networking is a Linux feature: on Docker Desktop for macOS or Windows, replace `--network host` with `--network rbp_default` and target `http://rbp-room:3001/room/`.

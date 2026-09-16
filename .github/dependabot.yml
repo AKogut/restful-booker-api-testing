@@ -43,10 +43,14 @@ updates:
     commit-message:
       prefix: 'ci'
 
-  - package-ecosystem: docker
+  - package-ecosystem: docker-compose
     directory: /
     schedule:
       interval: weekly
       day: monday
     commit-message:
       prefix: 'ci'
+    ignore:
+      - dependency-name: 'postgres'
+        update-types:
+          - version-update:semver-major
