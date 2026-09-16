@@ -83,26 +83,29 @@ The layout on disk:
 
 ```
 src/
-  config/     Typed, validated per-service configuration
-  client/     HttpClient (Axios), request builder, token auth, error model
-  models/     Domain types (Room, Booking, Message, Branding, Report, AuthToken)
-  schemas/    Zod schemas and generated JSON Schema contracts
-  services/   AuthService, RoomService, BookingService, MessageService,
-              BrandingService, ReportService
-  factories/  faker-based builders and fast-check arbitraries
-  support/    session and provisioning helpers for suites
+  config/      Typed, validated per-service configuration
+  client/      HttpClient (Axios), request builder, token auth, error model
+  models/      Domain types (Room, Booking, Message, Branding, Report, AuthToken)
+  schemas/     Zod schemas and generated JSON Schema contracts
+  services/    AuthService, RoomService, BookingService, MessageService,
+               BrandingService, ReportService
+  health/      Cross-service readiness gate on /actuator/health
+  profiles/    Per-target expectations (live vs local)
+  factories/   faker-based builders and fast-check arbitraries
+  support/     session and provisioning helpers for suites
+  diagnostics/ Exchange-log summariser behind diagnose:exchanges
 tests/
-  unit/       Hermetic framework tests (no network)
-  smoke/      Behavioural happy paths per service
-  contract/   Schema, drift & cross-service consistency
-  pact/       Consumer-driven contracts (hermetic, no platform needed)
-  negative/   Auth, authorization, boundary, malformed input
+  unit/        Hermetic framework tests (no network)
+  smoke/       Behavioural happy paths per service
+  contract/    Schema, drift & cross-service consistency
+  pact/        Consumer-driven contracts (hermetic, no platform needed)
+  negative/    Auth, authorization, boundary, malformed input
   data-driven/ JSON-dataset driven room & booking matrices
-  property/   fast-check property-based suites
-  security/   OWASP-oriented authz, token & injection checks
-  data/       External test-case datasets
-perf/         k6 smoke-load harness (TypeScript), thresholds, nightly CI
-docs/         Architecture, test strategy, bug reports
+  property/    fast-check property-based suites
+  security/    OWASP-oriented authz, token & injection checks
+  data/        External test-case datasets
+perf/          k6 smoke-load harness (TypeScript), thresholds, nightly CI
+docs/          Architecture, test strategy, bug reports
 ```
 
 ## Coverage
@@ -170,11 +173,10 @@ npm test
 
 **Performance** ([details](perf/README.md))
 
-| Script                    | Purpose                                                     |
-| ------------------------- | ----------------------------------------------------------- |
-| `npm run perf:smoke`      | k6 smoke load against the local stack, thresholds enforced  |
-| `npm run perf:smoke:live` | The same against live — read-only; never for the write flow |
-| `npm run perf:typecheck`  | Type-check the k6 scripts against `@types/k6`               |
+| Script                   | Purpose                                                    |
+| ------------------------ | ---------------------------------------------------------- |
+| `npm run perf:smoke`     | k6 smoke load against the local stack, thresholds enforced |
+| `npm run perf:typecheck` | Type-check the k6 scripts against `@types/k6`              |
 
 **Reporting and diagnostics**
 
@@ -237,7 +239,7 @@ npm run test:local     # run every live suite against the container stack
 npm run docker:down    # stop and remove volumes
 ```
 
-The `local` target runs **nightly in CI**, never on pull requests: 20 of the 140 tests skip against it, so a green run there is not evidence about the deployed platform. Its job is to catch the two targets drifting further apart — see [test-strategy.md](docs/test-strategy.md#the-local-target-runs-nightly-not-on-pull-requests).
+The `local` target runs **nightly in CI**, never on pull requests: 20 of the 144 tests skip against it, so a green run there is not evidence about the deployed platform. Its job is to catch the two targets drifting further apart — see [test-strategy.md](docs/test-strategy.md#the-local-target-runs-nightly-not-on-pull-requests).
 
 The target is selected by `ENV_FILE`; each env file sets `TEST_MODE`, which drives the expectation profile.
 
@@ -339,7 +341,7 @@ Twelve confirmed platform defects, each with reproduction steps, evidence and a 
 
 ## Reporting
 
-- **JUnit** XML is produced by the CI pipeline for every run.
+- **JUnit** XML is written on every CI run; the [Local Target workflow](.github/workflows/local-target.yml) publishes it as an artifact.
 - **Allure** results are generated with `npm run test:report`; `npm run allure:generate` renders the HTML report (`npm run allure:open` to view it locally).
 - The [Report workflow](.github/workflows/report.yml) runs the full suite, builds the Allure report and publishes it to **[GitHub Pages](https://akogut.github.io/restful-booker-api-testing/)** on every `main` build and on a nightly schedule (03:00 UTC), so the live report always reflects the latest run against the platform.
 

@@ -24,7 +24,7 @@ Enforced as k6 thresholds, so a breach exits non-zero and fails the run:
 | error rate    | `< 1%`      | `PERF_ERROR_RATE` |
 | check success | `> 99%`     | `PERF_CHECK_RATE` |
 
-Load shape and target are parameterized too: `PERF_VUS` (peak VUs, default 5), `PERF_RAMP` / `PERF_HOLD` (stage durations), and `PERF_TARGET` (`local` | `live`) or explicit `AUTH_URL` / `ROOM_URL` / `BOOKING_URL`.
+Load shape and target are parameterized too: `PERF_VUS` (peak VUs, default 5), `PERF_RAMP` / `PERF_HOLD` (stage durations), and the target through explicit `AUTH_URL` / `ROOM_URL` / `BOOKING_URL`, which default to the dockerized stack on `localhost`.
 
 ## Running it
 
@@ -42,7 +42,7 @@ PERF_P95_MS=1 npm run perf:smoke   # exits 99, threshold p(95)<1 fails
 
 ## Target it against, and what NOT to target
 
-The smoke **writes** bookings, so run it only against a disposable instance — the dockerized stack, or your own. It defaults to `local` for exactly this reason. Do **not** point the write scenario at the shared public demo (`PERF_TARGET=live`): it would leave load-test bookings on an environment other people use. The `live` target exists for read-only experimentation, not for the booking-create load.
+The smoke **writes** rooms and bookings, so run it only against a disposable instance — the dockerized stack, or your own through the URL overrides. It defaults to `localhost` for exactly this reason, and deliberately ships no preset for the shared public demo: load-testing it would leave load-test data on an environment other people use and put write load on a service this project does not own.
 
 ## In CI
 

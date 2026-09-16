@@ -1,30 +1,13 @@
-export type Target = 'local' | 'live'
-
-const target = (__ENV.PERF_TARGET ?? 'local') as Target
-
 interface Endpoints {
   auth: string
   room: string
   booking: string
 }
 
-const defaults: Record<Target, Endpoints> = {
-  local: {
-    auth: 'http://localhost:3004/auth/',
-    room: 'http://localhost:3001/room/',
-    booking: 'http://localhost:3000/booking/',
-  },
-  live: {
-    auth: 'https://automationintesting.online/api/auth',
-    room: 'https://automationintesting.online/api/room',
-    booking: 'https://automationintesting.online/api/booking',
-  },
-}
-
 export const endpoints: Endpoints = {
-  auth: __ENV.AUTH_URL ?? defaults[target].auth,
-  room: __ENV.ROOM_URL ?? defaults[target].room,
-  booking: __ENV.BOOKING_URL ?? defaults[target].booking,
+  auth: __ENV.AUTH_URL ?? 'http://localhost:3004/auth/',
+  room: __ENV.ROOM_URL ?? 'http://localhost:3001/room/',
+  booking: __ENV.BOOKING_URL ?? 'http://localhost:3000/booking/',
 }
 
 export const join = (base: string, path: string): string =>

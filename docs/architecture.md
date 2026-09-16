@@ -51,6 +51,7 @@ src/
   factories/               faker-based test data builders
   support/                 session, provisioning, adapters and the run registry
   profiles/                per-target expectations (live vs local)
+  diagnostics/             exchange-log summary behind diagnose:exchanges
 ```
 
 ### Request flow
@@ -140,7 +141,7 @@ run registry    →  a temp JSONL file whose path is exported as RUN_REGISTRY
 teardown        →  sweep anything the suites left behind, then delete the file
 ```
 
-Suites take the token synchronously with `sharedToken()` instead of logging in themselves, which took a full run from **21 logins to 12** — the remaining twelve belong to the auth suite and the login-negative matrix, where logging in _is_ the test subject.
+Suites take the token synchronously with `sharedToken()` instead of logging in themselves, which took a full run from **21 logins to 14**. One is the global setup; the other thirteen are tests where logging in _is_ the subject — the auth suite, the login-negative matrix, the `AuthToken` contract check, the login injection case and the password non-leakage check.
 
 ### The registry is a crash net, not the cleanup path
 
