@@ -17,9 +17,6 @@ const MARKER = 'SEC-TOKEN-'
 
 let token: string
 
-const createdRoom = (data: unknown): boolean =>
-  typeof data === 'object' && data !== null && 'roomid' in data
-
 const markedRoom = () => roomPayload({ roomName: `${MARKER}${nextRoomName()}` })
 
 beforeAll(() => {
@@ -31,31 +28,30 @@ afterAll(async () => {
 })
 
 describe('token tampering @security', () => {
-  const tamper = (value: string): Record<string, string> => ({
-    'flipped final character': `${value.slice(0, -1)}${value.at(-1) === 'a' ? 'b' : 'a'}`,
-    truncated: value.slice(0, Math.max(0, value.length - 4)),
-    'trailing whitespace': `${value} `,
-    'empty string': '',
-    'only whitespace': '   ',
-  })
+  const flipFinalCharacter = (value: string): string =>
+    `${value.slice(0, -1)}${value.at(-1) === 'a' ? 'b' : 'a'}`
 
-  it.each(Object.entries(tamper('abcdEFGH12345678')))(
-    'rejects a %s token on validate',
-    async (_name, candidate) => {
-      const response = await auth.validate(candidate)
-
-      expect(response.status).toBeGreaterThanOrEqual(400)
-      expect(response.status).toBeLessThan(500)
-    },
-  )
-
-  it('rejects a tampered token on a protected call and creates nothing', async () => {
-    const tampered = `${token.slice(0, -1)}${token.at(-1) === 'a' ? 'b' : 'a'}`
-
-    const response = await room.create(markedRoom(), tampered)
+  it.each<[string, (value: string) => string]>([
+    ['flipped final character', flipFinalCharacter],
+    ['truncated', (value) => value.slice(0, Math.max(0, value.length - 4))],
+    ['trailing whitespace', (value) => `${value} `],
+    ['empty string', () => ''],
+    ['only whitespace', () => '   '],
+  ])('rejects a %s token on validate', async (_name, tamper) => {
+    const response = await auth.validate(tamper(token))
 
     expect(response.status).toBeGreaterThanOrEqual(400)
-    expect(createdRoom(response.data)).toBe(false)
+    expect(response.status).toBeLessThan(500)
+  })
+
+  it('rejects a tampered token on a protected call and creates nothing', async () => {
+    const payload = markedRoom()
+
+    const response = await room.create(payload, flipFinalCharacter(token))
+
+    expect(response.status).toBeGreaterThanOrEqual(400)
+    const listing = await room.list()
+    expect(listing.data.rooms.map((entry) => entry.roomName)).not.toContain(payload.roomName)
   })
 })
 
