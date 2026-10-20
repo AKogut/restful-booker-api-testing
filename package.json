@@ -48,8 +48,8 @@
     "perf:smoke": "k6 run perf/smoke.ts"
   },
   "devDependencies": {
-    "@commitlint/cli": "^21.2.3",
-    "@commitlint/config-conventional": "^21.2.0",
+    "@commitlint/cli": "^21.2.4",
+    "@commitlint/config-conventional": "^21.2.4",
     "@eslint/js": "^10.0.1",
     "@faker-js/faker": "^10.6.0",
     "@pact-foundation/pact": "^17.1.4",
@@ -57,7 +57,7 @@
     "@types/node": "^22.20.3",
     "@vitest/coverage-v8": "^5.0.5",
     "allure-commandline": "^2.46.1",
-    "allure-vitest": "^3.13.0",
+    "allure-vitest": "^3.14.0",
     "eslint": "^10.13.0",
     "eslint-config-prettier": "^10.1.8",
     "fast-check": "^4.10.2",
@@ -66,7 +66,7 @@
     "prettier": "^3.9.10",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.71.2",
+    "typescript-eslint": "^8.72.0",
     "vitest": "^5.0.1"
   },
   "lint-staged": {
