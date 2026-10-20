@@ -1,5 +1,5 @@
 import fc from 'fast-check'
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 import { guestArbitrary, stayLengthArbitrary } from '@factories/arbitraries'
 import { nextStayWindow } from '@factories/booking-factory'
 import type { BookingPayload } from '@models/booking'
@@ -9,6 +9,7 @@ import { createdBooking } from '@support/bookings'
 import { provisionRoom } from '@support/rooms'
 import { sharedToken } from '../support/session'
 import { CreatedResources } from '@support/created-resources'
+import { establishFixtures } from '../support/fixtures'
 
 const { booking, room } = createServices()
 
@@ -33,7 +34,7 @@ const register = (data: unknown): void => {
   }
 }
 
-beforeAll(async () => {
+establishFixtures(async () => {
   token = sharedToken()
   testRoom = await provisionRoom(room, token)
 })
@@ -72,7 +73,7 @@ describe('booking properties @property', () => {
           bookingdates: payload.bookingdates,
         })
       }),
-      { numRuns: RUNS, verbose: true },
+      { numRuns: RUNS, verbose: true, endOnFailure: true },
     )
   })
 
@@ -101,7 +102,7 @@ describe('booking properties @property', () => {
           expect(overlapping.status).toBe(409)
         },
       ),
-      { numRuns: RUNS, verbose: true },
+      { numRuns: RUNS, verbose: true, endOnFailure: true },
     )
   })
 
@@ -123,7 +124,7 @@ describe('booking properties @property', () => {
 
         expect(summary.data.bookings).toContainEqual({ bookingDates: payload.bookingdates })
       }),
-      { numRuns: RUNS, verbose: true },
+      { numRuns: RUNS, verbose: true, endOnFailure: true },
     )
   })
 })

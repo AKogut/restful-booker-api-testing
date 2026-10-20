@@ -106,6 +106,8 @@ Transport-level retries are a property of the client, not of individual tests:
 - **Observable** — every exchange log entry carries its `attempt`, so a passing-but-flaky endpoint is visible in the report rather than silently smoothed over.
 - **Opt-out** — negative suites build their services through `createServicesWithoutRetry()`. A suite that asserts failure must observe the first response, not a masked one.
 
+There is exactly one retry above the client, and it is not a flakiness allowance: a live test is run a second time only when a canary proves the platform wiped a database underneath it ([Surviving scheduled resets](#surviving-scheduled-resets)).
+
 ## Two targets, one suite
 
 The suite runs against the hosted platform (`live`) and against the published RBP images in `docker compose` (`local`). These implement **different versions of the same API** — verified against the `2.2` images, the `latest` images and upstream `trunk` source, which agree with each other and disagree with live.
@@ -156,6 +158,19 @@ Swept 1 resource(s) left behind by an incomplete suite
 ```
 
 Verified by deliberately running a suite that provisions a room and never cleans up: the run failed and the sweep removed the room. Untested cleanup infrastructure is worth very little, since it only ever runs on the paths nobody exercises.
+
+### Surviving scheduled resets
+
+The live demo wipes each service's database every ten minutes ([evidence](test-strategy.md#scheduled-database-resets)). Four pieces turn that from a random red into a proven, visible recovery:
+
+| Piece                                                     | Role                                                                                                                                                                                      |
+| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `PlatformResetDetector` (`src/support/platform-reset.ts`) | Plants one room, one booking and one message, and later reports which of them the platform has wiped. A read that fails or returns an unexpected status counts as no evidence.            |
+| `tests/support/platform-reset.setup.ts`                   | A Vitest setup file. It arms a detector before each live file's fixtures and disarms it afterwards. On a retry it asks the detector for proof, and without proof fails the retry at once. |
+| `establishFixtures()` (`tests/support/fixtures.ts`)       | Replaces `beforeAll` in suites that provision data, so the gate can provision the fixtures again after a wipe.                                                                            |
+| `reset-retries` log                                       | Collects every granted retry across workers. Teardown prints the summary.                                                                                                                 |
+
+`retry: 1` is enabled only for runs with `HEALTHCHECK=1`. Offline layers (`tests/unit`, `tests/pact`) are never re-run, because the gate rejects their retry before the test body starts.
 
 ## Test data and isolation
 

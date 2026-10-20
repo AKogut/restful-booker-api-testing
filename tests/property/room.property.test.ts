@@ -51,7 +51,7 @@ describe('room properties @property', () => {
 
         expect(match).toMatchObject(payload)
       }),
-      { numRuns: RUNS, verbose: true },
+      { numRuns: RUNS, verbose: true, endOnFailure: true },
     )
   })
 })

@@ -1,4 +1,4 @@
-import { mkdtempSync, writeFileSync } from 'node:fs'
+import { mkdtempSync, rmSync, writeFileSync } from 'node:fs'
 import { tmpdir } from 'node:os'
 import { join } from 'node:path'
 import type { TestProject } from 'vitest/node'
@@ -6,6 +6,7 @@ import { getConfig } from '@config/app-config'
 import { waitForPlatformReady } from '@health/health-check'
 import { createServices } from '@services/service-factory'
 import { adminSession } from '@support/admin-session'
+import { describeResetRetries, readResetRetries, useResetRetryLog } from '@support/reset-retries'
 import { clearRegistry, readRegistry, type TrackedResource } from '@support/run-registry'
 import { adminToken } from '@support/session'
 
@@ -54,11 +55,20 @@ export default async function globalSetup(project: TestProject): Promise<() => P
   adminSession().adopt(token)
   project.provide('adminToken', token)
 
-  const path = join(mkdtempSync(join(tmpdir(), 'rbp-run-')), 'registry.jsonl')
+  const runDirectory = mkdtempSync(join(tmpdir(), 'rbp-run-'))
+  const path = join(runDirectory, 'registry.jsonl')
   writeFileSync(path, '')
   process.env.RUN_REGISTRY = path
+  const resetRetryLog = join(runDirectory, 'reset-retries.jsonl')
+  useResetRetryLog(resetRetryLog)
 
   return async () => {
+    const resetRetries = describeResetRetries(readResetRetries(resetRetryLog))
+    if (resetRetries !== undefined) {
+      console.warn(resetRetries)
+    }
+    rmSync(resetRetryLog, { force: true })
+
     const tracked = readRegistry(path)
     const removed = tracked.length === 0 ? 0 : await sweep(tracked, token)
     if (removed > 0) {
