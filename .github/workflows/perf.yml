@@ -35,7 +35,7 @@ jobs:
 
       - uses: grafana/setup-k6-action@v1
         with:
-          k6-version: '2.2.0'
+          k6-version: '2.3.0'
 
       - name: Run the smoke load
         id: k6
