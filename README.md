@@ -210,6 +210,7 @@ The platform is a shared public demo that cold-starts, so the framework treats t
 
 - **Readiness gate** — `globalSetup` polls `/actuator/health` across all six services until they are `UP` or `READINESS_TIMEOUT_MS` elapses, so a cold start no longer reds an otherwise healthy pipeline.
 - **Retry with backoff** — idempotent requests retry on `408/425/429/502/503/504` and transport failures, with exponential backoff and jitter. `POST` never retries, and `500` is treated as a real defect.
+- **Scheduled-reset recovery** — the live demo wipes each service's database every ten minutes. Every live file plants canaries, and a failed test runs once more, with its fixtures provisioned again, only when a canary proves a wipe. Without that proof the original failure stands ([details](docs/test-strategy.md#scheduled-database-resets)).
 - **Observable** — every exchange log entry carries its `attempt`, so retried calls stay visible in the report.
 - **Opt-out** — negative suites use `createServicesWithoutRetry()` so a failure assertion always observes the first response.
 

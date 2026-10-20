@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 import { bookingPayload } from '@factories/booking-factory'
 import { messagePayload } from '@factories/message-factory'
 import type { Booking } from '@models/booking'
@@ -24,6 +24,7 @@ import { itWhenSupported } from '../support/target'
 import { sharedToken } from '../support/session'
 import { CreatedResources } from '@support/created-resources'
 import { track } from '@support/run-registry'
+import { establishFixtures } from '../support/fixtures'
 
 const { auth, room, booking, message, branding, report } = createServices()
 const { credentials } = getConfig()
@@ -33,7 +34,7 @@ let testRoom: Room
 let testBooking: Booking
 const createdMessageIds = new CreatedResources('message')
 
-beforeAll(async () => {
+establishFixtures(async () => {
   token = sharedToken()
   testRoom = await provisionRoom(room, token)
   const created = createdBooking((await booking.create(bookingPayload(testRoom.roomid))).data)

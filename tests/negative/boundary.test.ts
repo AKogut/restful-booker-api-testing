@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 import { bookingPayload } from '@factories/booking-factory'
 import { messagePayload } from '@factories/message-factory'
 import { roomPayload } from '@factories/room-factory'
@@ -14,6 +14,7 @@ import { sharedToken } from '../support/session'
 import { CreatedResources } from '@support/created-resources'
 import { guardsDefect } from '../support/defect-guard'
 import { createdBooking } from '@support/bookings'
+import { establishFixtures } from '../support/fixtures'
 
 const { room, booking, message } = createServicesWithoutRetry()
 
@@ -21,7 +22,7 @@ let token: string
 let testRoom: Room
 const createdBookingIds = new CreatedResources('booking')
 
-beforeAll(async () => {
+establishFixtures(async () => {
   token = sharedToken()
   testRoom = await provisionRoom(room, token)
 })
