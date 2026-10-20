@@ -18,18 +18,17 @@
     "verbatimModuleSyntax": true,
     "skipLibCheck": true,
     "noEmit": true,
-    "baseUrl": ".",
     "paths": {
-      "@config/*": ["src/config/*"],
-      "@client/*": ["src/client/*"],
-      "@models/*": ["src/models/*"],
-      "@schemas/*": ["src/schemas/*"],
-      "@services/*": ["src/services/*"],
-      "@health/*": ["src/health/*"],
-      "@factories/*": ["src/factories/*"],
-      "@support/*": ["src/support/*"],
-      "@profiles/*": ["src/profiles/*"],
-      "@diagnostics/*": ["src/diagnostics/*"]
+      "@config/*": ["./src/config/*"],
+      "@client/*": ["./src/client/*"],
+      "@models/*": ["./src/models/*"],
+      "@schemas/*": ["./src/schemas/*"],
+      "@services/*": ["./src/services/*"],
+      "@health/*": ["./src/health/*"],
+      "@factories/*": ["./src/factories/*"],
+      "@support/*": ["./src/support/*"],
+      "@profiles/*": ["./src/profiles/*"],
+      "@diagnostics/*": ["./src/diagnostics/*"]
     }
   },
   "include": ["src", "tests", "scripts", "vitest.config.ts"]
