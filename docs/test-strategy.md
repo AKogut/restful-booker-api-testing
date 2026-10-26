@@ -149,7 +149,7 @@ That is the signature of the live reds that kept appearing after the session rec
 
 The suite cannot stop the platform from wiping itself, so it makes a wipe provable and recovers from it once:
 
-- **Canaries.** Every live test file plants one room, one booking and one message before its fixtures, and never touches them again. A canary that disappears proves its database was wiped. A failed or unexpected read proves nothing.
+- **Canaries.** Every live test file plants one room, one booking and one message before its fixtures, and never touches them again. A canary that drops out of its collection listing (`GET /room`, `GET /booking?roomid=`, `GET /message`) proves its database was wiped. A listing that fails or answers anything but `200` proves nothing, and per-id reads are never used.
 - **One proven retry.** Live runs allow one retry per test. Before the retry, the gate checks the canaries. With no canary gone, the retry fails at once with `Not retried: no platform database reset was detected…`, next to the original error, so a genuine failure reads exactly as before. With one gone, the file's fixtures are provisioned again through `establishFixtures()` and the test runs once more.
 - **Visible.** Every granted retry prints which database was wiped and which test it affected, and the run ends with a summary:
 
@@ -161,6 +161,8 @@ The suite cannot stop the platform from wiping itself, so it makes a wipe provab
 - **Bounded.** Unit and Pact files are never retried. Property tests stop at the first counterexample (`endOnFailure`) instead of shrinking against a database that is about to be wiped again.
 
 Both paths were checked against the live demo. A test failing for an ordinary reason was refused its retry and reported both errors. A test holding a booking across the real 14:44:37 wipe failed its first attempt with `404`. The gate found the booking canary gone, re-provisioned the fixtures and retried, and the retry passed. A full `test:live` run started at 14:47:55 then met the 14:48:12 room wipe inside `denies room.delete to a caller with an invalid token without changing the target`, the authorization test behind most of the historical reds. It finished 144/144 on one proven retry, where it would previously have failed.
+
+**Corrected on 26 October 2026:** the first version read a room's presence from `GET /room/{id}` and counted a `500` as gone, because BUG-002 makes a deleted room answer `500`. The platform's deploy of 23 October made every per-id route answer `500`, for live resources too, and that rule then granted a retry for almost any failure. A local run against the changed platform exposed it before CI did: it reported a room wipe for dozens of tests inside one 70-second run, which the ten-minute schedule rules out. Presence now comes only from the listings, which still answer correctly, and a unit test pins the case.
 
 One limit is deliberate. The gate grants a retry when any watched database was wiped since the file started, not only the one the failing test touched. A genuinely intermittent defect that coincides with a wipe in the same file could therefore pass on the retry. The warning and the run summary name every such retry, so it cannot pass unseen.
 

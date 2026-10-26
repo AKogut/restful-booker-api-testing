@@ -23,8 +23,20 @@ const startServer = async (status: 'UP' | 'DOWN'): Promise<string> => {
   return `http://127.0.0.1:${port}`
 }
 
+const startPlainErrorServer = async (): Promise<string> => {
+  const server = createServer((_request, response) => {
+    response.writeHead(500, { 'content-type': 'text/plain' })
+    response.end('Internal Server Error')
+  })
+  servers.push(server)
+  await new Promise<void>((resolve) => server.listen(0, resolve))
+  const { port } = server.address() as AddressInfo
+  return `http://127.0.0.1:${port}`
+}
+
 let upUrl: string
 let downUrl: string
+let plainErrorUrl: string
 let flakyUrl: string
 let flakyProbesLeft = 0
 
@@ -60,6 +72,7 @@ const configWith = (report: string, readinessTimeoutMs = 0): AppConfig => ({
 beforeAll(async () => {
   upUrl = await startServer('UP')
   downUrl = await startServer('DOWN')
+  plainErrorUrl = await startPlainErrorServer()
   flakyUrl = await startFlakyServer()
 })
 
@@ -83,6 +96,13 @@ describe('checkHealth', () => {
 
     const report = results.find((result) => result.service === 'report')
     expect(report).toEqual({ service: 'report', status: 'DOWN', healthy: false })
+  })
+
+  it('names the status when the service answers without a health report', async () => {
+    const results = await checkHealth(configWith(plainErrorUrl))
+
+    const report = results.find((result) => result.service === 'report')
+    expect(report).toEqual({ service: 'report', status: 'HTTP 500', healthy: false })
   })
 
   it('marks an unreachable service as UNREACHABLE', async () => {

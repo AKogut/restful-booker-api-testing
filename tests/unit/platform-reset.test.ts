@@ -22,12 +22,11 @@ const transportFailure = (): Promise<never> =>
 class FakePlatform {
   private nextId = 1
   readonly rooms = new Set<number>()
-  readonly bookings = new Set<number>()
+  readonly bookings = new Map<number, number>()
   readonly messages = new Map<number, string>()
   readonly deleted: string[] = []
-  vanishedRoomStatus = 500
-  readStatusOverride: number | undefined
-  readsFail = false
+  listingStatus = 200
+  listingsFail = false
   roomsFailToProvision = false
 
   reset(service: ResettableService): void {
@@ -44,17 +43,15 @@ class FakePlatform {
     return Promise.resolve({ roomid, roomName: `canary-${roomid}` } as Room)
   }
 
+  private listing<T>(data: T): Promise<ApiResponse<T>> {
+    return this.listingsFail ? transportFailure() : reply(this.listingStatus, data)
+  }
+
   services(): CanaryServices {
     const room = {
-      getById: (id: number) => {
-        if (this.readsFail) {
-          return transportFailure()
-        }
-        return reply(
-          this.readStatusOverride ?? (this.rooms.has(id) ? 200 : this.vanishedRoomStatus),
-          {},
-        )
-      },
+      list: () =>
+        this.listing({ rooms: [...this.rooms].map((roomid) => ({ roomid, roomName: 'canary' })) }),
+      getById: () => reply(500, 'Internal Server Error'),
       delete: (id: number) => {
         this.deleted.push(`room:${id}`)
         return reply(202, {})
@@ -64,15 +61,16 @@ class FakePlatform {
     const booking = {
       create: (payload: BookingPayload) => {
         const bookingid = this.nextId++
-        this.bookings.add(bookingid)
+        this.bookings.set(bookingid, payload.roomid)
         return reply(201, { bookingid, booking: { ...payload, bookingid } })
       },
-      getById: (id: number) => {
-        if (this.readsFail) {
-          return transportFailure()
-        }
-        return reply(this.readStatusOverride ?? (this.bookings.has(id) ? 200 : 404), {})
-      },
+      list: (roomid: number) =>
+        this.listing({
+          bookings: [...this.bookings]
+            .filter(([, bookedRoom]) => bookedRoom === roomid)
+            .map(([bookingid]) => ({ bookingid, roomid })),
+        }),
+      getById: () => reply(500, 'Internal Server Error'),
       delete: (id: number) => {
         this.deleted.push(`booking:${id}`)
         return reply(202, {})
@@ -84,18 +82,15 @@ class FakePlatform {
         this.messages.set(this.nextId++, payload.subject)
         return reply(200, { success: true })
       },
-      list: () => {
-        if (this.readsFail) {
-          return transportFailure()
-        }
-        const messages = [...this.messages].map(([id, subject]) => ({
-          id,
-          subject,
-          name: 'canary',
-          read: false,
-        }))
-        return reply(this.readStatusOverride ?? 200, { messages })
-      },
+      list: () =>
+        this.listing({
+          messages: [...this.messages].map(([id, subject]) => ({
+            id,
+            subject,
+            name: 'canary',
+            read: false,
+          })),
+        }),
       delete: (id: number) => {
         this.deleted.push(`message:${id}`)
         return reply(202, {})
@@ -110,12 +105,16 @@ class FakePlatform {
   }
 }
 
+const armedPlatform = async (): Promise<[FakePlatform, PlatformResetDetector]> => {
+  const platform = new FakePlatform()
+  const detector = platform.detector()
+  await detector.arm()
+  return [platform, detector]
+}
+
 describe('PlatformResetDetector', () => {
   it('plants a canary in every service it watches', async () => {
-    const platform = new FakePlatform()
-    const detector = platform.detector()
-
-    await detector.arm()
+    const [platform, detector] = await armedPlatform()
 
     expect(detector.armed).toEqual(['room', 'booking', 'message'])
     expect(platform.rooms.size).toBe(1)
@@ -123,18 +122,14 @@ describe('PlatformResetDetector', () => {
     expect(platform.messages.size).toBe(1)
   })
 
-  it('reports no reset while every canary is still there', async () => {
-    const platform = new FakePlatform()
-    const detector = platform.detector()
-    await detector.arm()
+  it('reports no reset while every canary is still listed', async () => {
+    const [, detector] = await armedPlatform()
 
     await expect(detector.resetServices()).resolves.toEqual([])
   })
 
   it('names the service whose database was reset and plants a fresh canary in it', async () => {
-    const platform = new FakePlatform()
-    const detector = platform.detector()
-    await detector.arm()
+    const [platform, detector] = await armedPlatform()
 
     platform.reset('booking')
 
@@ -144,9 +139,7 @@ describe('PlatformResetDetector', () => {
   })
 
   it('reports every service that was reset in the same window', async () => {
-    const platform = new FakePlatform()
-    const detector = platform.detector()
-    await detector.arm()
+    const [platform, detector] = await armedPlatform()
 
     platform.reset('room')
     platform.reset('message')
@@ -155,49 +148,39 @@ describe('PlatformResetDetector', () => {
     expect(detector.armed).toEqual(['room', 'booking', 'message'])
   })
 
-  it('reads the 500 a vanished room answers with as gone, because of BUG-002', async () => {
-    const platform = new FakePlatform()
-    const detector = platform.detector()
-    await detector.arm()
+  it('still finds the booking canary under its original room after the room database resets', async () => {
+    const [platform, detector] = await armedPlatform()
 
     platform.reset('room')
 
     await expect(detector.resetServices()).resolves.toEqual(['room'])
+    await expect(detector.resetServices()).resolves.toEqual([])
   })
 
-  it('reads a 404 for a vanished room as gone too', async () => {
-    const platform = new FakePlatform()
-    platform.vanishedRoomStatus = 404
-    const detector = platform.detector()
-    await detector.arm()
-
-    platform.reset('room')
-
-    await expect(detector.resetServices()).resolves.toEqual(['room'])
-  })
-
-  it('claims no reset when the canaries cannot be read in transit', async () => {
-    const platform = new FakePlatform()
-    const detector = platform.detector()
-    await detector.arm()
-
-    platform.reset('room')
-    platform.reset('booking')
-    platform.reset('message')
-    platform.readsFail = true
+  it('never reads a 500 from a per-id route as a reset', async () => {
+    const [, detector] = await armedPlatform()
 
     await expect(detector.resetServices()).resolves.toEqual([])
   })
 
-  it('claims no reset when the platform answers with a status that proves nothing', async () => {
-    const platform = new FakePlatform()
-    const detector = platform.detector()
-    await detector.arm()
+  it('claims no reset when the listings cannot be read in transit', async () => {
+    const [platform, detector] = await armedPlatform()
 
     platform.reset('room')
     platform.reset('booking')
     platform.reset('message')
-    platform.readStatusOverride = 403
+    platform.listingsFail = true
+
+    await expect(detector.resetServices()).resolves.toEqual([])
+  })
+
+  it('claims no reset when a listing answers with anything but 200', async () => {
+    const [platform, detector] = await armedPlatform()
+
+    platform.reset('room')
+    platform.reset('booking')
+    platform.reset('message')
+    platform.listingStatus = 500
 
     await expect(detector.resetServices()).resolves.toEqual([])
   })
@@ -216,9 +199,7 @@ describe('PlatformResetDetector', () => {
   })
 
   it('removes every canary it still holds when disarmed', async () => {
-    const platform = new FakePlatform()
-    const detector = platform.detector()
-    await detector.arm()
+    const [platform, detector] = await armedPlatform()
 
     await detector.disarm()
 

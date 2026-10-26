@@ -23,19 +23,12 @@ type ProvisionRoom = (room: RoomService, token: string) => Promise<Room>
 
 const PLANTING_ORDER: readonly ResettableService[] = ['room', 'booking', 'message']
 
-const GONE_ROOM_STATUSES: ReadonlySet<number> = new Set([404, 500])
-
-const GONE_BOOKING_STATUSES: ReadonlySet<number> = new Set([404])
-
-const presenceOf = (status: number, goneStatuses: ReadonlySet<number>): Presence => {
-  if (status === 200) {
-    return 'present'
-  }
-  return goneStatuses.has(status) ? 'gone' : 'unknown'
-}
+const presenceIn = (listed: readonly number[], id: number): Presence =>
+  listed.includes(id) ? 'present' : 'gone'
 
 export class PlatformResetDetector {
   private readonly canaries = new Map<ResettableService, number>()
+  private bookingRoom: number | undefined
 
   constructor(
     private readonly services: CanaryServices,
@@ -96,6 +89,7 @@ export class PlatformResetDetector {
       const created = createdBooking((await booking.create(bookingPayload(roomid))).data)
       if (created !== undefined) {
         track('booking', created.bookingid)
+        this.bookingRoom = roomid
       }
       return created?.bookingid
     }
@@ -113,16 +107,33 @@ export class PlatformResetDetector {
     const { room, booking, message } = this.services
     try {
       if (service === 'room') {
-        return presenceOf((await room.getById(id)).status, GONE_ROOM_STATUSES)
+        const listing = await room.list()
+        return listing.status === 200
+          ? presenceIn(
+              listing.data.rooms.map((entry) => entry.roomid),
+              id,
+            )
+          : 'unknown'
       }
       if (service === 'booking') {
-        return presenceOf((await booking.getById(id, this.token())).status, GONE_BOOKING_STATUSES)
+        if (this.bookingRoom === undefined) {
+          return 'unknown'
+        }
+        const listing = await booking.list(this.bookingRoom, this.token())
+        return listing.status === 200 && 'bookings' in listing.data
+          ? presenceIn(
+              listing.data.bookings.map((entry) => entry.bookingid),
+              id,
+            )
+          : 'unknown'
       }
       const listing = await message.list(this.token())
-      if (listing.status !== 200) {
-        return 'unknown'
-      }
-      return listing.data.messages.some((entry) => entry.id === id) ? 'present' : 'gone'
+      return listing.status === 200
+        ? presenceIn(
+            listing.data.messages.map((entry) => entry.id),
+            id,
+          )
+        : 'unknown'
     } catch (error) {
       if (error instanceof ApiError) {
         return 'unknown'

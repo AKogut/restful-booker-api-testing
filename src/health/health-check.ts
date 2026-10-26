@@ -6,7 +6,7 @@ import { healthReportSchema } from '@schemas/health.schema'
 
 export interface ServiceHealth {
   service: string
-  status: HealthStatus | 'UNREACHABLE'
+  status: HealthStatus | 'UNREACHABLE' | `HTTP ${number}`
   healthy: boolean
 }
 
@@ -24,7 +24,7 @@ const probe = async (baseUrl: string, timeoutMs: number): Promise<ServiceHealth[
   try {
     const response = await client.request<unknown>({ method: 'GET', path: '/actuator/health' })
     const report = healthReportSchema.safeParse(response.data)
-    return report.success ? report.data.status : 'UNREACHABLE'
+    return report.success ? report.data.status : `HTTP ${response.status}`
   } catch {
     return 'UNREACHABLE'
   }

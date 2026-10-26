@@ -86,7 +86,7 @@ A third layer sits above them: **consumer-driven contracts**. The `pact` suite d
 
 ## Environment readiness
 
-`checkHealth()` probes `/actuator/health` on all six services in parallel and reports each as `UP`, `DOWN` or `UNREACHABLE`.
+`checkHealth()` probes `/actuator/health` on all six services in parallel and reports each as `UP`, `DOWN`, `UNREACHABLE` when nothing answered, or `HTTP <status>` when the service answered without a health report.
 
 `waitForPlatformReady()` runs as a Vitest `globalSetup` gate whenever `HEALTHCHECK=1`. It polls that probe every `READINESS_INTERVAL_MS` until every service is `UP` or `READINESS_TIMEOUT_MS` elapses, printing the unhealthy set on each poll. The public demo cold-starts, so a single probe would fail an otherwise healthy pipeline; a bounded wait absorbs the cold start while still failing fast — and with a precise cause — when the platform is genuinely down:
 
@@ -163,12 +163,12 @@ Verified by deliberately running a suite that provisions a room and never cleans
 
 The live demo wipes each service's database every ten minutes ([evidence](test-strategy.md#scheduled-database-resets)). Four pieces turn that from a random red into a proven, visible recovery:
 
-| Piece                                                     | Role                                                                                                                                                                                      |
-| --------------------------------------------------------- | ----------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
-| `PlatformResetDetector` (`src/support/platform-reset.ts`) | Plants one room, one booking and one message, and later reports which of them the platform has wiped. A read that fails or returns an unexpected status counts as no evidence.            |
-| `tests/support/platform-reset.setup.ts`                   | A Vitest setup file. It arms a detector before each live file's fixtures and disarms it afterwards. On a retry it asks the detector for proof, and without proof fails the retry at once. |
-| `establishFixtures()` (`tests/support/fixtures.ts`)       | Replaces `beforeAll` in suites that provision data, so the gate can provision the fixtures again after a wipe.                                                                            |
-| `reset-retries` log                                       | Collects every granted retry across workers. Teardown prints the summary.                                                                                                                 |
+| Piece                                                     | Role                                                                                                                                                                                             |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PlatformResetDetector` (`src/support/platform-reset.ts`) | Plants one room, one booking and one message, and later reports which of them dropped out of their collection listing. A listing that fails or answers anything but `200` counts as no evidence. |
+| `tests/support/platform-reset.setup.ts`                   | A Vitest setup file. It arms a detector before each live file's fixtures and disarms it afterwards. On a retry it asks the detector for proof, and without proof fails the retry at once.        |
+| `establishFixtures()` (`tests/support/fixtures.ts`)       | Replaces `beforeAll` in suites that provision data, so the gate can provision the fixtures again after a wipe.                                                                                   |
+| `reset-retries` log                                       | Collects every granted retry across workers. Teardown prints the summary.                                                                                                                        |
 
 `retry: 1` is enabled only for runs with `HEALTHCHECK=1`. Offline layers (`tests/unit`, `tests/pact`) are never re-run, because the gate rejects their retry before the test body starts.
 
