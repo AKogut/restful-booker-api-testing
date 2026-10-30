@@ -105,11 +105,67 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      - run: cp .env.example .env
+
+      # The hosted platform is a public demo this project does not run. When it
+      # fails its health checks, the suite runs against the dockerized platform
+      # instead of failing every PR, and the run says so. See
+      # docs/test-strategy.md.
+      - name: Choose the target
+        id: target
+        shell: bash
+        run: |
+          live_up() {
+            local url status
+            while IFS= read -r url; do
+              status="$(curl -fsS --max-time 10 "${url%/}/actuator/health" | jq -r '.status')" || return 1
+              [ "$status" = UP ] || return 1
+            done < <(sed -n 's/^[A-Z]*_URL=//p' .env.example)
+          }
+          for attempt in 1 2 3; do
+            if live_up; then
+              echo "name=live" >> "$GITHUB_OUTPUT"
+              exit 0
+            fi
+            if [ "$attempt" -lt 3 ]; then sleep 10; fi
+          done
+          echo "name=local" >> "$GITHUB_OUTPUT"
+          echo "::warning::The hosted platform failed its health checks, so this run tests the dockerized platform instead."
+
+      - name: Use the hosted platform
+        if: steps.target.outputs.name == 'live'
+        run: cp .env.example .env
+
+      - name: Use the dockerized platform
+        if: steps.target.outputs.name == 'local'
+        run: cp .env.local.example .env.local
+
+      - name: Pull the platform images
+        if: steps.target.outputs.name == 'local'
+        uses: ./.github/actions/pull-images
+
+      - name: Start the dockerized platform
+        if: steps.target.outputs.name == 'local'
+        run: npm run docker:up
+
+      - name: Wait for every service to report healthy
+        if: steps.target.outputs.name == 'local'
+        uses: ./.github/actions/wait-for-platform
+
       - name: Run the full suite with coverage
-        run: npm run coverage
+        run: |
+          if [ "$TARGET" = local ]; then npm run coverage:local; else npm run coverage; fi
         env:
+          TARGET: ${{ steps.target.outputs.name }}
           HTTP_LOG_FILE: exchanges.jsonl
+
+      - name: Summarise the target
+        if: always() && steps.target.outputs.name == 'local'
+        run: |
+          {
+            echo '## Target: `local`, because the hosted platform was down'
+            echo
+            echo 'This run tested the RBP `2.2` images via docker compose, not the deployed platform. The defect guards and capability-gated assertions that describe live behaviour skip there, so a green run here is weaker evidence than a green run against live. See [test-strategy.md](docs/test-strategy.md#the-local-target-runs-nightly-not-on-pull-requests).'
+          } >> "$GITHUB_STEP_SUMMARY"
 
       - name: Summarise the HTTP exchanges
         if: failure()
@@ -122,3 +178,7 @@ jobs:
           name: exchange-log-${{ github.run_attempt }}
           path: exchanges.jsonl
           if-no-files-found: warn
+
+      - name: Tear down the platform
+        if: always() && steps.target.outputs.name == 'local'
+        run: npm run docker:down

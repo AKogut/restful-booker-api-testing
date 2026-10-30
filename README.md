@@ -240,7 +240,7 @@ npm run test:local     # run every live suite against the container stack
 npm run docker:down    # stop and remove volumes
 ```
 
-The `local` target runs **nightly in CI**, never on pull requests: 20 of the 144 tests skip against it, so a green run there is not evidence about the deployed platform. Its job is to catch the two targets drifting further apart — see [test-strategy.md](docs/test-strategy.md#the-local-target-runs-nightly-not-on-pull-requests).
+The `local` target runs **nightly in CI**, and on pull requests only while the hosted platform is down: 20 of the 144 tests skip against it, so a green run there is not evidence about the deployed platform. Its job is to catch the two targets drifting further apart — see [test-strategy.md](docs/test-strategy.md#the-local-target-runs-nightly-not-on-pull-requests).
 
 The target is selected by `ENV_FILE`; each env file sets `TEST_MODE`, which drives the expectation profile.
 
