@@ -211,17 +211,19 @@ They run **different versions of the same API**, so expectations are declared pe
 
 It is still worth running on a schedule, because its value is orthogonal to the PR gate: it detects the two targets **drifting further apart**, which is otherwise something we would only notice by accident. The `Local Target` workflow brings the stack up nightly, runs every live suite against it sequentially, and publishes its JUnit results under a separate artifact name so the two targets are never conflated. A failure means either the containers regressed or a new divergence appeared — the latter belongs in [target-differences.md](target-differences.md).
 
+**One exception: an outage of the hosted platform.** `Tests & coverage` checks the hosted platform's health endpoints first. When they do not answer, it runs the suite against the dockerized target instead, raises a warning and names the target in the job summary. The platform is a public demo this project does not run, and an outage there would otherwise block every merge until it ends. A fallback run is the weaker evidence described above, and the nightly report against live keeps failing until the platform is back.
+
 ## CI strategy
 
-| Trigger             | What runs                                                                                            |
-| ------------------- | ---------------------------------------------------------------------------------------------------- |
-| Pull request / push | Static checks · Unit tests · Contract tests (Pact) · Tests & coverage (thresholds enforced)          |
-| Push to `main`      | Full suite + Allure report published to GitHub Pages                                                 |
-| Nightly 02:00 UTC   | Every live suite against the dockerized target — drift detection, not a merge gate                   |
-| Nightly 03:00 UTC   | Full suite against live platform; report republished; the run fails if the suite was red             |
-| Daily 04:00 UTC     | OWASP ZAP baseline scan against the dockerized platform ([details](security-scan.md))                |
-| Nightly 05:00 UTC   | k6 smoke load against the dockerized target; fails on a budget breach ([details](../perf/README.md)) |
-| Manual              | `Tests (manual)` workflow — any single suite or all together                                         |
+| Trigger             | What runs                                                                                                                                     |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pull request / push | Static checks · Unit tests · Contract tests (Pact) · Tests & coverage (thresholds enforced; against the dockerized target while live is down) |
+| Push to `main`      | Full suite + Allure report published to GitHub Pages                                                                                          |
+| Nightly 02:00 UTC   | Every live suite against the dockerized target — drift detection, not a merge gate                                                            |
+| Nightly 03:00 UTC   | Full suite against live platform; report republished; the run fails if the suite was red                                                      |
+| Daily 04:00 UTC     | OWASP ZAP baseline scan against the dockerized platform ([details](security-scan.md))                                                         |
+| Nightly 05:00 UTC   | k6 smoke load against the dockerized target; fails on a budget breach ([details](../perf/README.md))                                          |
+| Manual              | `Tests (manual)` workflow — any single suite or all together                                                                                  |
 
 The three dockerized jobs — drift (02:00), ZAP (04:00) and k6 (05:00) — are staggered an hour apart so they never contend for the same runner ports. The 03:00 report job runs against the hosted platform and shares nothing with them.
 
