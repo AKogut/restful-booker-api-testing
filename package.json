@@ -34,6 +34,7 @@
     "pact:verify": "ENV_FILE=.env.local tsx scripts/verify-providers.ts",
     "pact:can-i-deploy": "tsx scripts/pact-broker.ts can-i-deploy",
     "test:report": "HEALTHCHECK=1 ALLURE=1 vitest run",
+    "test:report:local": "ENV_FILE=.env.local HEALTHCHECK=1 ALLURE=1 vitest run --no-file-parallelism",
     "allure:generate": "allure generate allure-results --clean -o allure-report",
     "allure:open": "allure open allure-report",
     "schema:export": "tsx scripts/export-schemas.ts",
