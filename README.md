@@ -183,6 +183,7 @@ npm test
 | Script                       | Purpose                                                                                                               |
 | ---------------------------- | --------------------------------------------------------------------------------------------------------------------- |
 | `npm run test:report`        | Full suite with Allure results                                                                                        |
+| `npm run test:report:local`  | The same against the Docker stack                                                                                     |
 | `npm run allure:generate`    | Render the Allure HTML report                                                                                         |
 | `npm run allure:open`        | Open it locally                                                                                                       |
 | `npm run diagnose:exchanges` | Summarise an `HTTP_LOG_FILE` exchange log — see [#67](https://github.com/AKogut/restful-booker-api-testing/issues/67) |
@@ -240,7 +241,7 @@ npm run test:local     # run every live suite against the container stack
 npm run docker:down    # stop and remove volumes
 ```
 
-The `local` target runs **nightly in CI**, and on pull requests only while the hosted platform is down: 20 of the 144 tests skip against it, so a green run there is not evidence about the deployed platform. Its job is to catch the two targets drifting further apart — see [test-strategy.md](docs/test-strategy.md#the-local-target-runs-nightly-not-on-pull-requests).
+The `local` target runs **nightly in CI**, and on pull requests and for the published report only while the hosted platform is down: 20 of the 144 tests skip against it, so a green run there is not evidence about the deployed platform. Its job is to catch the two targets drifting further apart — see [test-strategy.md](docs/test-strategy.md#the-local-target-runs-nightly-not-on-pull-requests).
 
 The target is selected by `ENV_FILE`; each env file sets `TEST_MODE`, which drives the expectation profile.
 
@@ -344,7 +345,7 @@ Twelve confirmed platform defects, each with reproduction steps, evidence and a 
 
 - **JUnit** XML is written on every CI run; the [Local Target workflow](.github/workflows/local-target.yml) publishes it as an artifact.
 - **Allure** results are generated with `npm run test:report`; `npm run allure:generate` renders the HTML report (`npm run allure:open` to view it locally).
-- The [Report workflow](.github/workflows/report.yml) runs the full suite, builds the Allure report and publishes it to **[GitHub Pages](https://akogut.github.io/restful-booker-api-testing/)** on every `main` build and on a nightly schedule (03:00 UTC), so the live report always reflects the latest run against the platform.
+- The [Report workflow](.github/workflows/report.yml) runs the full suite, builds the Allure report and publishes it to **[GitHub Pages](https://akogut.github.io/restful-booker-api-testing/)** on every `main` build and on a nightly schedule (03:00 UTC), so the live report always reflects the latest run. While the hosted platform is down, that run tests the dockerized platform, and the report's Environment section says so.
 
 ## Documentation
 
