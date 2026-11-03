@@ -167,6 +167,15 @@ jobs:
             echo 'This run tested the RBP `2.2` images via docker compose, not the deployed platform. The defect guards and capability-gated assertions that describe live behaviour skip there, so a green run here is weaker evidence than a green run against live. See [test-strategy.md](docs/test-strategy.md#the-local-target-runs-nightly-not-on-pull-requests).'
           } >> "$GITHUB_STEP_SUMMARY"
 
+      - name: Keep the per-test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-ci-${{ steps.target.outputs.name }}-${{ github.run_attempt }}
+          path: junit.xml
+          if-no-files-found: warn
+          retention-days: 90
+
       - name: Summarise the HTTP exchanges
         if: failure()
         run: npm run diagnose:exchanges
