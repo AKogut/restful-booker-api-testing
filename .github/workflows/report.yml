@@ -77,6 +77,14 @@ jobs:
         env:
           TARGET: ${{ steps.target.outputs.name }}
         continue-on-error: true
+      - name: Keep the per-test results
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: junit-report-${{ steps.target.outputs.name }}-${{ github.run_attempt }}
+          path: junit.xml
+          if-no-files-found: warn
+          retention-days: 90
       - name: Tear down the platform
         if: always() && steps.target.outputs.name == 'local'
         run: npm run docker:down
