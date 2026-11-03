@@ -111,16 +111,17 @@ The target is a public demo mutated by other users at any time. The suite theref
 
 A shared demo produces two kinds of red that must not be conflated:
 
-| Signal                                               | Interpretation | Handling                                           |
-| ---------------------------------------------------- | -------------- | -------------------------------------------------- |
-| Cold start, `502/503/504`, `429`, connection refused | Infrastructure | Readiness gate + bounded retry with backoff        |
-| `4xx` contract violation, `500`, wrong body          | Product defect | Fails the suite; documented in `docs/bug-reports/` |
+| Signal                                               | Interpretation | Handling                                                                |
+| ---------------------------------------------------- | -------------- | ----------------------------------------------------------------------- |
+| Cold start, `502/503/504`, `429`, connection refused | Infrastructure | Readiness gate + bounded retry with backoff                             |
+| Scheduled database reset wipes a suite's fixtures    | Infrastructure | Reset canaries + one proven retry ([below](#scheduled-database-resets)) |
+| `4xx` contract violation, `500`, wrong body          | Product defect | Fails the suite; documented in `docs/bug-reports/`                      |
 
 Retries are deliberately narrow: idempotent methods only, transient statuses only, capped attempts, and disabled outright in the negative suites via `createServicesWithoutRetry()`. Every attempt is recorded in the exchange log, so a call that only passes on retry is visible rather than hidden — a retry policy that silently masks degradation would be worse than no retry at all.
 
 ### Recovering a revoked admin session
 
-The live platform occasionally stops accepting the run's shared admin token part-way through a run ([#134](https://github.com/AKogut/restful-booker-api-testing/issues/134)): authenticated calls start returning `403`, `POST /room` returns `500`, fresh logins still succeed, and every suite that follows fails for a reason unrelated to what it tests. The trigger is outside this project and has not been confirmed; the failures coincided with overlapping live runs.
+The live platform occasionally stops accepting the run's shared admin token part-way through a run ([#134](https://github.com/AKogut/restful-booker-api-testing/issues/134)): authenticated calls start returning `403`, `POST /room` returns `500`, fresh logins still succeed, and every suite that follows fails for a reason unrelated to what it tests. The trigger turned out to be the platform's own schedule rather than overlapping live runs: the auth service wipes its database every ten minutes, and every token it issued goes with it ([Scheduled database resets](#scheduled-database-resets)).
 
 `AdminSession` handles it narrowly. When a request carrying **the shared token** is answered with `401`, `403` or `500`, it asks the platform whether that token is still valid:
 
@@ -128,6 +129,42 @@ The live platform occasionally stops accepting the run's shared admin token part
 - no longer valid → it logs in once, replays that request once with the new token, and every later request in the worker sends the new token up front.
 
 It never touches a token a test chose itself — the invalid, tampered and logged-out tokens the negative and security suites send are compared against the shared token and ignored, so no authorization assertion can be satisfied by a renewal. Concurrent rejections share one login. If the check itself fails in transit — which happened on a slow `500` from the BUG-012 path, where the platform dropped the follow-up `validate` — the original response is returned with a warning rather than turning a genuine answer into a transport error. Each renewal prints a warning, and the replayed exchange carries `sessionRenewed: true` in the exchange log, which `npm run diagnose:exchanges` counts — a run that needed it says so.
+
+### Scheduled database resets
+
+Every RBP service carries a `DatabaseScheduler`. When its `dbRefresh` variable is set to `N`, the service drops and re-seeds its database every `N` minutes, on its own timer, and its id sequence starts again from the seed. The dockerized target in this repository does not set it. The live demo does.
+
+A canary probe on 20 October 2026 measured the schedule by planting one room, one booking and one message and polling them every 15 seconds:
+
+| Service | Wiped at (UTC)     | Signal                                              |
+| ------- | ------------------ | --------------------------------------------------- |
+| booking | 14:34:37, 14:44:37 | canary booking `404`; the next booking id was lower |
+| auth    | 14:34:37, 14:44:37 | the shared token answered `403` in the same poll    |
+| room    | 14:38:13, 14:48:12 | canary room gone; the new room reused id `4`        |
+| message | 14:39:14           | canary message missing from the inbox               |
+
+So each database is wiped every ten minutes, at its own offset. Anything a suite created before its database was wiped is gone afterwards: a booking read answers `404`, a room read answers `500` ([BUG-002](bug-reports/BUG-002-deleted-room-returns-500.md)), a message drops out of the inbox, and the room report comes back empty. A property test that hits the wipe keeps shrinking against an empty database until `testTimeout` kills it, which hides the real assertion behind a timeout.
+
+That is the signature of the live reds that kept appearing after the session recovery landed. Where the run logs time-stamp the failing test, they read 08:58, 08:59, 09:38, 09:44, 07:44 and 12:18 UTC, on six different days: minutes 4, 8 and 9 past a ten-minute mark, the minutes the probe measured for booking, room and message. The auth wipe is also what [#134](https://github.com/AKogut/restful-booker-api-testing/issues/134) was chasing.
+
+The suite cannot stop the platform from wiping itself, so it makes a wipe provable and recovers from it once:
+
+- **Canaries.** Every live test file plants one room, one booking and one message before its fixtures, and never touches them again. A canary that drops out of its collection listing (`GET /room`, `GET /booking?roomid=`, `GET /message`) proves its database was wiped. A listing that fails or answers anything but `200` proves nothing, and per-id reads are never used.
+- **One proven retry.** Live runs allow one retry per test. Before the retry, the gate checks the canaries. With no canary gone, the retry fails at once with `Not retried: no platform database reset was detected…`, next to the original error, so a genuine failure reads exactly as before. With one gone, the file's fixtures are provisioned again through `establishFixtures()` and the test runs once more.
+- **Visible.** Every granted retry prints which database was wiped and which test it affected, and the run ends with a summary:
+
+  ```
+  Retried 1 test(s) once after the platform reset its booking database mid-run:
+    - tests/smoke/bookings.test.ts > updates a booking and persists the changes
+  ```
+
+- **Bounded.** Unit and Pact files are never retried. Property tests stop at the first counterexample (`endOnFailure`) instead of shrinking against a database that is about to be wiped again.
+
+Both paths were checked against the live demo. A test failing for an ordinary reason was refused its retry and reported both errors. A test holding a booking across the real 14:44:37 wipe failed its first attempt with `404`. The gate found the booking canary gone, re-provisioned the fixtures and retried, and the retry passed. A full `test:live` run started at 14:47:55 then met the 14:48:12 room wipe inside `denies room.delete to a caller with an invalid token without changing the target`, the authorization test behind most of the historical reds. It finished 144/144 on one proven retry, where it would previously have failed.
+
+**Corrected on 26 October 2026:** the first version read a room's presence from `GET /room/{id}` and counted a `500` as gone, because BUG-002 makes a deleted room answer `500`. The platform's deploy of 23 October made every per-id route answer `500`, for live resources too, and that rule then granted a retry for almost any failure. A local run against the changed platform exposed it before CI did: it reported a room wipe for dozens of tests inside one 70-second run, which the ten-minute schedule rules out. Presence now comes only from the listings, which still answer correctly, and a unit test pins the case.
+
+One limit is deliberate. The gate grants a retry when any watched database was wiped since the file started, not only the one the failing test touched. A genuinely intermittent defect that coincides with a wipe in the same file could therefore pass on the retry. The warning and the run summary name every such retry, so it cannot pass unseen.
 
 ### What the exchange log established about the "CI-only" failures
 
@@ -155,7 +192,7 @@ That was a limit of the `it.fails` idiom itself: it accepted _any_ failure, so i
 
 The original signature — `POST /room` **create** returning `500` in CI while green locally — was traced to the room service rejecting the token CI had obtained, under the burst of **21 logins per run** (one `adminToken()` per test file). The shared-token change removed that burst: `globalSetup` performs one login per run and every suite takes it via `sharedToken()`. The create-`500` has not recurred in 30 subsequent `main` runs, and a bounded live measurement of 25 sequential creates returned `200` every time at a 0.23 s maximum — the normal write path is neither slow nor flaky. The ~31 s slow-`500` measured along the way was the oversized-`description` path ([BUG-012](bug-reports/BUG-012-oversized-input-returns-500.md)), a distinct pathological input, not ordinary creation.
 
-The CI reds that remain are a different, understood pair: a `GET` on a room another suite deleted mid-test returns `500` ([BUG-002](bug-reports/BUG-002-deleted-room-returns-500.md)'s missing-room behaviour under live concurrency), and the occasional transient connection blip the readiness gate and retry absorb. [#67](https://github.com/AKogut/restful-booker-api-testing/issues/67) is closed on that evidence — and if the signature ever returns, the exchange log now uploaded on failure and the raised `testTimeout` mean it will name its own cause.
+The CI reds that remained at the time were put down to a `GET` on a room another suite deleted mid-test returning `500` ([BUG-002](bug-reports/BUG-002-deleted-room-returns-500.md)), plus the occasional transient connection blip the readiness gate and retry absorb. **Corrected on 20 October 2026:** no suite was deleting another suite's room. The room service wipes its own database every ten minutes ([Scheduled database resets](#scheduled-database-resets)), and BUG-002 is only why the vanished room surfaced as a `500` rather than a `404`. [#67](https://github.com/AKogut/restful-booker-api-testing/issues/67) is closed on that evidence — and if the signature ever returns, the exchange log now uploaded on failure and the raised `testTimeout` mean it will name its own cause.
 
 ## Targets
 
@@ -174,25 +211,27 @@ They run **different versions of the same API**, so expectations are declared pe
 
 It is still worth running on a schedule, because its value is orthogonal to the PR gate: it detects the two targets **drifting further apart**, which is otherwise something we would only notice by accident. The `Local Target` workflow brings the stack up nightly, runs every live suite against it sequentially, and publishes its JUnit results under a separate artifact name so the two targets are never conflated. A failure means either the containers regressed or a new divergence appeared — the latter belongs in [target-differences.md](target-differences.md).
 
+**One exception: an outage of the hosted platform.** `Tests & coverage` and `Report` check the hosted platform's health endpoints first. When they do not answer, they run the suite against the dockerized target instead, raise a warning and name the target in the job summary; `Report` also names it in the Environment section of the published report. The platform is a public demo this project does not run, and an outage there would otherwise block every merge until it ends and leave the published report empty. A fallback run is the weaker evidence described above, so during an outage a green `Report` says nothing about the deployed platform: the warning on the run is the sign that it is still down.
+
 ## CI strategy
 
-| Trigger             | What runs                                                                                            |
-| ------------------- | ---------------------------------------------------------------------------------------------------- |
-| Pull request / push | Static checks · Unit tests · Contract tests (Pact) · Tests & coverage (thresholds enforced)          |
-| Push to `main`      | Full suite + Allure report published to GitHub Pages                                                 |
-| Nightly 02:00 UTC   | Every live suite against the dockerized target — drift detection, not a merge gate                   |
-| Nightly 03:00 UTC   | Full suite against live platform; report republished; the run fails if the suite was red             |
-| Daily 04:00 UTC     | OWASP ZAP baseline scan against the dockerized platform ([details](security-scan.md))                |
-| Nightly 05:00 UTC   | k6 smoke load against the dockerized target; fails on a budget breach ([details](../perf/README.md)) |
-| Manual              | `Tests (manual)` workflow — any single suite or all together                                         |
+| Trigger             | What runs                                                                                                                                     |
+| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pull request / push | Static checks · Unit tests · Contract tests (Pact) · Tests & coverage (thresholds enforced; against the dockerized target while live is down) |
+| Push to `main`      | Full suite + Allure report published to GitHub Pages (against the dockerized target while live is down)                                       |
+| Nightly 02:00 UTC   | Every live suite against the dockerized target — drift detection, not a merge gate                                                            |
+| Nightly 03:00 UTC   | Full suite against live platform (the dockerized target while live is down); report republished; the run fails if the suite was red           |
+| Daily 04:00 UTC     | OWASP ZAP baseline scan against the dockerized platform ([details](security-scan.md))                                                         |
+| Nightly 05:00 UTC   | k6 smoke load against the dockerized target; fails on a budget breach ([details](../perf/README.md))                                          |
+| Manual              | `Tests (manual)` workflow — any single suite or all together                                                                                  |
 
-The three dockerized jobs — drift (02:00), ZAP (04:00) and k6 (05:00) — are staggered an hour apart so they never contend for the same runner ports. The 03:00 report job runs against the hosted platform and shares nothing with them.
+The three dockerized jobs — drift (02:00), ZAP (04:00) and k6 (05:00) — are staggered an hour apart so they never contend for the same runner ports. The 03:00 report job runs against the hosted platform and shares nothing with them; during an outage it starts its own stack in that same slot.
 
 Static checks and unit tests run in parallel and gate the live job, so a broken build never reaches the shared environment.
 
 ## Reporting
 
-Allure results are produced when `ALLURE=1`, rendered to HTML and published to [GitHub Pages](https://akogut.github.io/restful-booker-api-testing/). JUnit XML is emitted in CI for machine consumption. The report is published even when the suite is red — the workflow then fails explicitly, so triage material exists for every failure.
+Allure results are produced when `ALLURE=1`, rendered to HTML and published to [GitHub Pages](https://akogut.github.io/restful-booker-api-testing/). JUnit XML is emitted in CI for machine consumption. The report is published even when the suite is red — the workflow then fails explicitly, so triage material exists for every failure. During an outage of the hosted platform the report comes from the dockerized run, and its Environment section says so.
 
 ## Performance
 

@@ -86,7 +86,7 @@ A third layer sits above them: **consumer-driven contracts**. The `pact` suite d
 
 ## Environment readiness
 
-`checkHealth()` probes `/actuator/health` on all six services in parallel and reports each as `UP`, `DOWN` or `UNREACHABLE`.
+`checkHealth()` probes `/actuator/health` on all six services in parallel and reports each as `UP`, `DOWN`, `UNREACHABLE` when nothing answered, or `HTTP <status>` when the service answered without a health report.
 
 `waitForPlatformReady()` runs as a Vitest `globalSetup` gate whenever `HEALTHCHECK=1`. It polls that probe every `READINESS_INTERVAL_MS` until every service is `UP` or `READINESS_TIMEOUT_MS` elapses, printing the unhealthy set on each poll. The public demo cold-starts, so a single probe would fail an otherwise healthy pipeline; a bounded wait absorbs the cold start while still failing fast — and with a precise cause — when the platform is genuinely down:
 
@@ -105,6 +105,8 @@ Transport-level retries are a property of the client, not of individual tests:
 - **Exponential backoff with jitter** — `baseDelayMs · 2^(attempt-1)`, capped at `maxDelayMs`, randomized across the upper half so parallel suites do not resynchronize.
 - **Observable** — every exchange log entry carries its `attempt`, so a passing-but-flaky endpoint is visible in the report rather than silently smoothed over.
 - **Opt-out** — negative suites build their services through `createServicesWithoutRetry()`. A suite that asserts failure must observe the first response, not a masked one.
+
+There is exactly one retry above the client, and it is not a flakiness allowance: a live test is run a second time only when a canary proves the platform wiped a database underneath it ([Surviving scheduled resets](#surviving-scheduled-resets)).
 
 ## Two targets, one suite
 
@@ -156,6 +158,19 @@ Swept 1 resource(s) left behind by an incomplete suite
 ```
 
 Verified by deliberately running a suite that provisions a room and never cleans up: the run failed and the sweep removed the room. Untested cleanup infrastructure is worth very little, since it only ever runs on the paths nobody exercises.
+
+### Surviving scheduled resets
+
+The live demo wipes each service's database every ten minutes ([evidence](test-strategy.md#scheduled-database-resets)). Four pieces turn that from a random red into a proven, visible recovery:
+
+| Piece                                                     | Role                                                                                                                                                                                             |
+| --------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------ |
+| `PlatformResetDetector` (`src/support/platform-reset.ts`) | Plants one room, one booking and one message, and later reports which of them dropped out of their collection listing. A listing that fails or answers anything but `200` counts as no evidence. |
+| `tests/support/platform-reset.setup.ts`                   | A Vitest setup file. It arms a detector before each live file's fixtures and disarms it afterwards. On a retry it asks the detector for proof, and without proof fails the retry at once.        |
+| `establishFixtures()` (`tests/support/fixtures.ts`)       | Replaces `beforeAll` in suites that provision data, so the gate can provision the fixtures again after a wipe.                                                                                   |
+| `reset-retries` log                                       | Collects every granted retry across workers. Teardown prints the summary.                                                                                                                        |
+
+`retry: 1` is enabled only for runs with `HEALTHCHECK=1`. Offline layers (`tests/unit`, `tests/pact`) are never re-run, because the gate rejects their retry before the test body starts.
 
 ## Test data and isolation
 

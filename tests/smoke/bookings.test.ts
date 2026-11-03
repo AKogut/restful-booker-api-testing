@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 import type { Booking, BookingPayload } from '@models/booking'
 import type { Room } from '@models/room'
 import { createServices } from '@services/service-factory'
@@ -9,6 +9,7 @@ import { expectedStatus, supports } from '@profiles/target-profile'
 import { guardsDefect } from '../support/defect-guard'
 import { sharedToken } from '../support/session'
 import { CreatedResources } from '@support/created-resources'
+import { establishFixtures } from '../support/fixtures'
 
 const { booking, room } = createServices()
 
@@ -26,7 +27,7 @@ const createBooking = async (payload: BookingPayload): Promise<Booking> => {
   return created
 }
 
-beforeAll(async () => {
+establishFixtures(async () => {
   token = sharedToken()
   testRoom = await provisionRoom(room, token)
 })

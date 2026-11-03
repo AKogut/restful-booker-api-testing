@@ -23,6 +23,8 @@ export default defineConfig({
     environment: 'node',
     include: ['tests/**/*.test.ts'],
     globalSetup: ['./tests/global-setup.ts'],
+    setupFiles: ['./tests/support/platform-reset.setup.ts'],
+    retry: process.env.HEALTHCHECK === '1' ? 1 : 0,
     testTimeout: 45_000,
     hookTimeout: 90_000,
     teardownTimeout: 90_000,

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 import { bookingPayload } from '@factories/booking-factory'
 import { messagePayload } from '@factories/message-factory'
 import { nextRoomName, roomPayload } from '@factories/room-factory'
@@ -12,6 +12,7 @@ import { provisionRoom } from '@support/rooms'
 import { track } from '@support/run-registry'
 import { sweepRoomsByPrefix } from '../support/room-sweep'
 import { sharedToken } from '../support/session'
+import { establishFixtures } from '../support/fixtures'
 
 const { room, booking, message, branding } = createServicesWithoutRetry(getConfig())
 
@@ -46,7 +47,7 @@ const provisionMessage = async (): Promise<number> => {
   return created.id
 }
 
-beforeAll(async () => {
+establishFixtures(async () => {
   token = sharedToken()
   currentBranding = (await branding.get()).data
   targetRoom = await provisionRoom(room, token)

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from 'vitest'
+import { afterAll, describe, expect, it } from 'vitest'
 import { bookingPayload } from '@factories/booking-factory'
 import type { BookingPayload } from '@models/booking'
 import type { Room } from '@models/room'
@@ -10,6 +10,7 @@ import bookingCases from '../data/booking-cases.json'
 import { expectedStatus, supports } from '@profiles/target-profile'
 import { sharedToken } from '../support/session'
 import { CreatedResources } from '@support/created-resources'
+import { establishFixtures } from '../support/fixtures'
 
 interface BookingCase {
   name: string
@@ -41,7 +42,7 @@ const buildPayload = (testCase: BookingCase): BookingPayload => {
   return payload
 }
 
-beforeAll(async () => {
+establishFixtures(async () => {
   token = sharedToken()
   testRoom = await provisionRoom(room, token)
 })
