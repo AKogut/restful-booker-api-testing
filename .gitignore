@@ -31,3 +31,4 @@ zap.yaml
 exchanges*.jsonl
 pacts/
 perf-summary.json
+flakemetry-run.json

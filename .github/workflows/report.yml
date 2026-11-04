@@ -82,7 +82,9 @@ jobs:
         uses: actions/upload-artifact@v7
         with:
           name: junit-report-${{ steps.target.outputs.name }}-${{ github.run_attempt }}
-          path: junit.xml
+          path: |
+            junit.xml
+            flakemetry-run.json
           if-no-files-found: warn
           retention-days: 90
       - name: Tear down the platform
