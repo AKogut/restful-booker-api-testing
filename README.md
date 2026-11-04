@@ -6,6 +6,7 @@
 [![Local Target](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/local-target.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/local-target.yml)
 [![Performance](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/perf.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/perf.yml)
 [![Allure report](https://img.shields.io/badge/Allure_report-live-brightgreen.svg)](https://akogut.github.io/restful-booker-api-testing/)
+[![Flakemetry](https://img.shields.io/endpoint?url=https%3A%2F%2Fakogut.github.io%2Fflakemetry%2Fdemo%2Frestful-booker%2Fhealth.json)](https://akogut.github.io/flakemetry/demo/restful-booker/flaky.html)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
 [![Node](https://img.shields.io/badge/node-LTS-brightgreen.svg)](./.nvmrc)
 [![TypeScript](https://img.shields.io/badge/TypeScript-strict-3178c6.svg)](./tsconfig.json)
@@ -342,6 +343,8 @@ Twelve confirmed platform defects, each with reproduction steps, evidence and a 
 | [BUG-012](docs/bug-reports/BUG-012-oversized-input-returns-500.md)    | Oversized string input returns 500 instead of 400          | Minor    |
 
 ## Reporting
+
+History across runs is public on [Flakemetry](https://akogut.github.io/flakemetry/demo/restful-booker/flaky.html): the hosted and the dockerized target scored apart, and the nights the readiness gate stopped a run shown as runs in which no test ran. It is rebuilt nightly from the JUnit and reporter files CI keeps for 90 days.
 
 - **JUnit** XML is written on every CI run; the [Local Target workflow](.github/workflows/local-target.yml) publishes it as an artifact.
 - **Allure** results are generated with `npm run test:report`; `npm run allure:generate` renders the HTML report (`npm run allure:open` to view it locally).
