@@ -10,6 +10,7 @@ const reporters = (): Reporters => {
   const active: (string | [string, Record<string, unknown>])[] = ['default']
   if (process.env.CI) {
     active.push(['junit', { outputFile: process.env.JUNIT_FILE ?? 'junit.xml' }])
+    active.push(['@flakemetry/vitest-reporter', { outputFile: 'flakemetry-run.json' }])
   }
   if (process.env.ALLURE === '1') {
     active.push(['allure-vitest/reporter', { resultsDir: 'allure-results' }])
