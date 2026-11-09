@@ -57,7 +57,7 @@
     "@pact-foundation/pact": "^17.1.4",
     "@types/k6": "^2.3.1",
     "@types/node": "^22.20.5",
-    "@vitest/coverage-v8": "^5.0.5",
+    "@vitest/coverage-v8": "^5.1.0",
     "allure-commandline": "^2.46.1",
     "allure-vitest": "^3.14.0",
     "eslint": "^10.13.0",
