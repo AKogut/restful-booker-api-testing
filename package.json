@@ -60,7 +60,7 @@
     "@vitest/coverage-v8": "^5.0.5",
     "allure-commandline": "^2.46.1",
     "allure-vitest": "^3.14.0",
-    "eslint": "^10.13.0",
+    "eslint": "^10.14.0",
     "eslint-config-prettier": "^10.1.8",
     "fast-check": "^4.10.2",
     "husky": "^9.1.7",
@@ -68,7 +68,7 @@
     "prettier": "^3.9.10",
     "tsx": "^4.23.15",
     "typescript": "^6.0.3",
-    "typescript-eslint": "^8.72.0",
+    "typescript-eslint": "^8.72.1",
     "vitest": "^5.0.1"
   },
   "lint-staged": {
