@@ -31,10 +31,6 @@ jobs:
           node-version-file: .nvmrc
           cache: npm
       - run: npm ci
-      # The hosted platform is a public demo this project does not run. When it
-      # fails its health checks, the report comes from the dockerized platform
-      # instead of an empty run, and both the run and the report say so. See
-      # docs/test-strategy.md.
       - name: Choose the target
         id: target
         shell: bash
