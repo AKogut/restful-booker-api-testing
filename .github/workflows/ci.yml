@@ -106,10 +106,6 @@ jobs:
           cache: npm
       - run: npm ci
 
-      # The hosted platform is a public demo this project does not run. When it
-      # fails its health checks, the suite runs against the dockerized platform
-      # instead of failing every PR, and the run says so. See
-      # docs/test-strategy.md.
       - name: Choose the target
         id: target
         shell: bash
