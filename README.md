@@ -14,6 +14,8 @@
 Production-grade API test automation framework for the [Restful Booker Platform](https://automationintesting.online/) — a Spring Boot **microservices** Bed & Breakfast booking system. Built to demonstrate a modular, maintainable, and CI-integrated approach to testing a multi-service API, including cross-service contract validation.
 
 > **Status:** feature-complete. All eleven milestones (M0–M10) are closed; the [project board](https://github.com/users/AKogut/projects/15) records how it was built. Ongoing work is upkeep — Dependabot updates and the nightly monitoring jobs.
+>
+> **Hosted demo outage:** since its 23 October 2026 deploy, the hosted platform answers `500` on every per-id route and on its health endpoints ([#162](https://github.com/AKogut/restful-booker-api-testing/issues/162)). Until it recovers, CI and the published report run against the dockerized platform and say so on every run. The live-only defect guards are not running in the meantime.
 
 ## What it demonstrates
 
