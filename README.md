@@ -5,6 +5,7 @@
 [![Security Scan](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/security-scan.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/security-scan.yml)
 [![Local Target](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/local-target.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/local-target.yml)
 [![Performance](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/perf.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/perf.yml)
+[![Mutation](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/mutation.yml/badge.svg)](https://github.com/AKogut/restful-booker-api-testing/actions/workflows/mutation.yml)
 [![Allure report](https://img.shields.io/badge/Allure_report-live-brightgreen.svg)](https://akogut.github.io/restful-booker-api-testing/)
 [![Flakemetry](https://img.shields.io/endpoint?url=https%3A%2F%2Fakogut.github.io%2Fflakemetry%2Fdemo%2Frestful-booker%2Fhealth.json)](https://akogut.github.io/flakemetry/demo/restful-booker/flaky.html)
 [![License: MIT](https://img.shields.io/badge/license-MIT-green.svg)](./LICENSE)
@@ -46,19 +47,20 @@ Each service exposes Swagger UI and an `/actuator/health` endpoint. Mutating ope
 
 ## Tech Stack
 
-| Concern                | Choice                                    |
-| ---------------------- | ----------------------------------------- |
-| Language               | TypeScript (strict)                       |
-| HTTP client            | Axios (wrapped in a typed `HttpClient`)   |
-| Test runner            | Vitest                                    |
-| Schema & contract      | Zod → JSON Schema                         |
-| Consumer contracts     | Pact (pact-js) + dockerized Pact Broker   |
-| Property-based testing | fast-check                                |
-| Performance / load     | k6 (TypeScript, `@types/k6`)              |
-| Test data              | @faker-js/faker                           |
-| Deterministic target   | Dockerized RBP via docker-compose         |
-| Reporting              | Allure + JUnit, published to GitHub Pages |
-| CI/CD                  | GitHub Actions                            |
+| Concern                | Choice                                      |
+| ---------------------- | ------------------------------------------- |
+| Language               | TypeScript (strict)                         |
+| HTTP client            | Axios (wrapped in a typed `HttpClient`)     |
+| Test runner            | Vitest                                      |
+| Schema & contract      | Zod → JSON Schema                           |
+| Consumer contracts     | Pact (pact-js) + dockerized Pact Broker     |
+| Property-based testing | fast-check                                  |
+| Mutation testing       | Stryker (Vitest runner, TypeScript checker) |
+| Performance / load     | k6 (TypeScript, `@types/k6`)                |
+| Test data              | @faker-js/faker                             |
+| Deterministic target   | Dockerized RBP via docker-compose           |
+| Reporting              | Allure + JUnit, published to GitHub Pages   |
+| CI/CD                  | GitHub Actions                              |
 
 ## Architecture
 
@@ -124,6 +126,7 @@ docs/          Architecture, test strategy, bug reports
 - **Negative & data-driven** — authorization, boundary, malformed, table-driven, and property-based (incl. double-booking)
 - **Security** — BFLA/IDOR authorization matrix, token tampering, header hygiene, secret non-leakage (OWASP API-oriented)
 - **Performance** — k6 smoke load on the booking flow with enforced p95-latency and error-rate budgets ([perf/](perf/README.md))
+- **Mutation testing** — Stryker mutates the HTTP client and support layers weekly and fails below a 75% mutation score, so the unit suite has to catch the changes it claims to cover ([details](docs/test-strategy.md#mutation-testing))
 
 ## Getting Started
 
@@ -138,21 +141,22 @@ npm test
 
 **Running tests**
 
-| Script                     | Purpose                                                  |
-| -------------------------- | -------------------------------------------------------- |
-| `npm test`                 | Everything — unit, pact and every live suite             |
-| `npm run test:unit`        | Hermetic framework tests, no network                     |
-| `npm run test:live`        | All six live suites against the platform                 |
-| `npm run test:local`       | The same suites against the Docker stack, sequentially   |
-| `npm run test:smoke`       | Behavioural happy paths per service                      |
-| `npm run test:contract`    | Schema, drift and cross-service checks                   |
-| `npm run test:negative`    | Credentials, authorization matrix, boundary, malformed   |
-| `npm run test:data-driven` | Room and booking matrices from external JSON datasets    |
-| `npm run test:property`    | fast-check properties, including double-booking          |
-| `npm run test:security`    | OWASP-oriented authorization, token and injection checks |
-| `npm run test:watch`       | Watch mode                                               |
-| `npm run coverage`         | Everything, with thresholds enforced                     |
-| `npm run coverage:local`   | The same against the Docker stack                        |
+| Script                     | Purpose                                                   |
+| -------------------------- | --------------------------------------------------------- |
+| `npm test`                 | Everything — unit, pact and every live suite              |
+| `npm run test:unit`        | Hermetic framework tests, no network                      |
+| `npm run test:live`        | All six live suites against the platform                  |
+| `npm run test:local`       | The same suites against the Docker stack, sequentially    |
+| `npm run test:smoke`       | Behavioural happy paths per service                       |
+| `npm run test:contract`    | Schema, drift and cross-service checks                    |
+| `npm run test:negative`    | Credentials, authorization matrix, boundary, malformed    |
+| `npm run test:data-driven` | Room and booking matrices from external JSON datasets     |
+| `npm run test:property`    | fast-check properties, including double-booking           |
+| `npm run test:security`    | OWASP-oriented authorization, token and injection checks  |
+| `npm run test:mutation`    | Stryker mutation testing of the client and support layers |
+| `npm run test:watch`       | Watch mode                                                |
+| `npm run coverage`         | Everything, with thresholds enforced                      |
+| `npm run coverage:local`   | The same against the Docker stack                         |
 
 **Consumer contracts** ([details](docs/contract-testing.md))
 
