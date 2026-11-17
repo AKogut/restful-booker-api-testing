@@ -1,0 +1,49 @@
+name: Mutation
+
+on:
+  schedule:
+    - cron: '0 6 * * 0'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  stryker:
+    name: Mutation testing (unit layer)
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
+        with:
+          node-version-file: .nvmrc
+          cache: npm
+      - run: npm ci
+
+      - name: Run Stryker against the unit suite
+        run: npm run test:mutation
+
+      - name: Record the score in the run summary
+        if: always()
+        run: |
+          if [ -f reports/mutation/mutation.json ]; then
+            jq -r '
+              [.files[].mutants[].status] as $statuses
+              | ($statuses | map(select(. == "Killed" or . == "Timeout")) | length) as $detected
+              | ($statuses | map(select(. == "Survived")) | length) as $survived
+              | ($statuses | map(select(. == "NoCoverage")) | length) as $uncovered
+              | (10000 * $detected / ($detected + $survived + $uncovered) | round / 100) as $score
+              | "Mutation score \($score)% · \($detected) detected · \($survived) survived · \($uncovered) without coverage"
+            ' reports/mutation/mutation.json >> "$GITHUB_STEP_SUMMARY"
+          else
+            echo "Stryker produced no report — the run did not complete" >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload the mutation report
+        if: always()
+        uses: actions/upload-artifact@v7
+        with:
+          name: mutation-report
+          path: reports/mutation/
+          if-no-files-found: error

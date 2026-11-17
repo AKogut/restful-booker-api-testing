@@ -20,6 +20,7 @@
     "test:property": "HEALTHCHECK=1 vitest run tests/property",
     "test:security": "HEALTHCHECK=1 vitest run tests/security",
     "test:pact": "rm -rf pacts && vitest run tests/pact",
+    "test:mutation": "stryker run",
     "test:live": "HEALTHCHECK=1 vitest run tests/smoke tests/contract tests/negative tests/data-driven tests/property tests/security",
     "coverage": "HEALTHCHECK=1 vitest run --coverage",
     "test:local": "ENV_FILE=.env.local HEALTHCHECK=1 vitest run --no-file-parallelism tests/smoke tests/contract tests/negative tests/data-driven tests/property tests/security",
@@ -55,6 +56,9 @@
     "@faker-js/faker": "^10.6.0",
     "@flakemetry/vitest-reporter": "^0.2.0",
     "@pact-foundation/pact": "^17.1.4",
+    "@stryker-mutator/core": "^10.1.1",
+    "@stryker-mutator/typescript-checker": "^10.1.1",
+    "@stryker-mutator/vitest-runner": "^10.1.1",
     "@types/k6": "^2.3.1",
     "@types/node": "^22.20.5",
     "@vitest/coverage-v8": "^5.1.0",
@@ -84,5 +88,13 @@
     "axios": "^1.21.1",
     "dotenv": "^18.0.10",
     "zod": "^4.6.7"
+  },
+  "overrides": {
+    "@stryker-mutator/core": {
+      "minimatch": "^11.0.9"
+    },
+    "typed-rest-client": {
+      "qs": "^6.17.1"
+    }
   }
 }

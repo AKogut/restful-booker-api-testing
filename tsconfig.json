@@ -31,5 +31,5 @@
       "@diagnostics/*": ["./src/diagnostics/*"]
     }
   },
-  "include": ["src", "tests", "scripts", "vitest.config.ts"]
+  "include": ["src", "tests", "scripts", "vitest.config.ts", "vitest.mutation.config.ts"]
 }

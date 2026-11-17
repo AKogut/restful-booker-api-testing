@@ -215,15 +215,16 @@ It is still worth running on a schedule, because its value is orthogonal to the 
 
 ## CI strategy
 
-| Trigger             | What runs                                                                                                                                     |
-| ------------------- | --------------------------------------------------------------------------------------------------------------------------------------------- |
-| Pull request / push | Static checks · Unit tests · Contract tests (Pact) · Tests & coverage (thresholds enforced; against the dockerized target while live is down) |
-| Push to `main`      | Full suite + Allure report published to GitHub Pages (against the dockerized target while live is down)                                       |
-| Nightly 02:00 UTC   | Every live suite against the dockerized target — drift detection, not a merge gate                                                            |
-| Nightly 03:00 UTC   | Full suite against live platform (the dockerized target while live is down); report republished; the run fails if the suite was red           |
-| Daily 04:00 UTC     | OWASP ZAP baseline scan against the dockerized platform ([details](security-scan.md))                                                         |
-| Nightly 05:00 UTC   | k6 smoke load against the dockerized target; fails on a budget breach ([details](../perf/README.md))                                          |
-| Manual              | `Tests (manual)` workflow — any single suite or all together                                                                                  |
+| Trigger                  | What runs                                                                                                                                     |
+| ------------------------ | --------------------------------------------------------------------------------------------------------------------------------------------- |
+| Pull request / push      | Static checks · Unit tests · Contract tests (Pact) · Tests & coverage (thresholds enforced; against the dockerized target while live is down) |
+| Push to `main`           | Full suite + Allure report published to GitHub Pages (against the dockerized target while live is down)                                       |
+| Nightly 02:00 UTC        | Every live suite against the dockerized target — drift detection, not a merge gate                                                            |
+| Nightly 03:00 UTC        | Full suite against live platform (the dockerized target while live is down); report republished; the run fails if the suite was red           |
+| Daily 04:00 UTC          | OWASP ZAP baseline scan against the dockerized platform ([details](security-scan.md))                                                         |
+| Nightly 05:00 UTC        | k6 smoke load against the dockerized target; fails on a budget breach ([details](../perf/README.md))                                          |
+| Weekly, Sunday 06:00 UTC | Stryker mutation testing of `src/client` and `src/support` against the unit suite; fails below a 75% score ([details](#mutation-testing))     |
+| Manual                   | `Tests (manual)` workflow — any single suite or all together                                                                                  |
 
 The three dockerized jobs — drift (02:00), ZAP (04:00) and k6 (05:00) — are staggered an hour apart so they never contend for the same runner ports. The 03:00 report job runs against the hosted platform and shares nothing with them; during an outage it starts its own stack in that same slot.
 
@@ -238,6 +239,24 @@ Allure results are produced when `ALLURE=1`, rendered to HTML and published to [
 The functional suites assert correctness; they say nothing about behaviour under concurrent load. A [k6](https://k6.io) smoke fills that gap: a ramping-VU profile over the booking flow (room list, booking create, booking list) with p95-latency and error-rate budgets enforced as thresholds, so a regression exits non-zero and fails the nightly run. It runs against the **dockerized** target — load-testing writes against the shared public demo would pollute an environment other people use. Full design, budgets and the "provision your own room" determinism rule in [perf/README.md](../perf/README.md).
 
 k6 runs on its own concurrency engine rather than the Vitest `HttpClient`, so it generates real parallel load; the scripts stay TypeScript, type-checked against `@types/k6` and gated in CI.
+
+## Mutation testing
+
+Line coverage says which code the unit suite runs, not whether the suite would notice that code changing. [Stryker](https://stryker-mutator.io) answers the second question. It mutates `src/client` and `src/support` (flipped conditions, changed operators, emptied blocks, altered literals) and reruns the unit suite against each mutant. A mutant the suite fails on is killed, and one it passes is a gap.
+
+| First measurement, 17 November 2026 | Value                                                                                                                                                      |
+| ----------------------------------- | ---------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| Mutation score, all mutants         | 79.95%                                                                                                                                                     |
+| Mutation score, covered code        | 84.78%                                                                                                                                                     |
+| Killed or timed out                 | 323                                                                                                                                                        |
+| Survived                            | 58, 37 of them in `http-client.ts` and `request-logger.ts`                                                                                                 |
+| Without coverage                    | 23. Ten are in `rooms.ts` and `session.ts`, which only the live suites reach; the rest are in `http-client.ts`, `request-logger.ts` and `reset-retries.ts` |
+
+The TypeScript checker discards mutants that would not compile (390 on that run), so the score counts only changes a real edit could produce. Only the unit suite runs: mutating against the hosted platform would cost a live run per mutant.
+
+`npm run test:mutation` runs it locally in under a minute. The `Mutation` workflow runs it weekly and on demand. It writes the score to the run summary, uploads the HTML report, and fails below **75%**, about five points under the first measurement, so a weakened unit suite shows up as a red run rather than as a quietly lower number.
+
+Stryker 10.1.1 pins `minimatch` 10.2.6, and through `typed-rest-client` it pins `qs` 6.15.1. Both have open advisories. `package.json` overrides them for those two packages only, to the versions the rest of the tree already uses. The run produced the identical score with and without the overrides. The overrides can go once Stryker depends on `minimatch` 11 and a patched `typed-rest-client`.
 
 ## Status
 
