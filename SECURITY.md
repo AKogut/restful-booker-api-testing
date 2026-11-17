@@ -20,4 +20,4 @@ The `main` branch only. There are no releases and no backports.
 
 ## Scanning
 
-An OWASP ZAP baseline scan runs nightly against the dockerized stack ([details](docs/security-scan.md)). Dependabot alerts and security updates open a pull request as soon as an advisory affects a dependency, and version updates arrive weekly. Neither is a substitute for the other: ZAP inspects HTTP behaviour, Dependabot inspects the supply chain.
+An OWASP ZAP baseline scan runs nightly against the dockerized stack ([details](docs/security-scan.md)). CodeQL code scanning analyses the TypeScript sources and the GitHub Actions workflows on every push to `main`, on pull requests and weekly. Dependabot alerts and security updates open a pull request as soon as an advisory affects a dependency, and version updates arrive weekly. None of them substitutes for another: ZAP inspects HTTP behaviour, CodeQL inspects the code, and Dependabot inspects the supply chain.
