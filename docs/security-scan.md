@@ -40,7 +40,7 @@ Suppressions carry their rationale inline in the rules file. An un-annotated sup
 
 ```bash
 npm run docker:up
-docker run --network host -v "$PWD:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:stable \
+docker run --network host -v "$PWD:/zap/wrk:rw" ghcr.io/zaproxy/zaproxy:2.17.0 \
   zap-baseline.py -t http://localhost:3001/room/ -c .zap/rules.tsv \
   -r zap-report/baseline.html -I
 npm run docker:down
