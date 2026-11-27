@@ -49,8 +49,6 @@
           "roomName",
           "type",
           "accessible",
-          "image",
-          "description",
           "features",
           "roomPrice"
         ],

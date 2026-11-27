@@ -110,13 +110,13 @@ There is exactly one retry above the client, and it is not a flakiness allowance
 
 ## Two targets, one suite
 
-The suite runs against the hosted platform (`live`) and against the published RBP images in `docker compose` (`local`). These implement **different versions of the same API** — verified against the `2.2` images, the `latest` images and upstream `trunk` source, which agree with each other and disagree with live.
+The suite runs against the hosted platform (`live`) and against the published RBP images in `docker compose` (`local`). These implemented **different versions of the same API** until the hosted platform's October 2026 outage — verified against the `2.2` images, the `latest` images and upstream `trunk` source, which agree with each other and disagreed with live. Since 27 November 2026 live answers like the images, so both targets hold the same values ([target-differences.md](target-differences.md#since-27-november-2026)).
 
 Rather than maintain two suites or assert the lowest common denominator, differences are declared in one module:
 
 ```
 src/profiles/target-profile.ts
-  STATUS        expectedStatus('auth.rejected')   → 401 live, 403 local
+  STATUS        expectedStatus('auth.rejected')   → 403 on both (401 live before Nov 2026)
   CAPABILITIES  supports('auth.tokenInBody')      → gates version-specific assertions
 ```
 

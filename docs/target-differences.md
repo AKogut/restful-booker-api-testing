@@ -9,6 +9,14 @@ The suite runs against two targets that implement **different versions of the sa
 
 They are not interchangeable. This document records every difference the suite encodes, and why the differences are modelled rather than papered over.
 
+## Since 27 November 2026
+
+The hosted platform came back from its [October outage](https://github.com/AKogut/restful-booker-api-testing/issues/162) answering exactly like the published images. Every status and capability below now matches the `local` column on live, and BUG-001 no longer reproduces there. `src/profiles/target-profile.ts` therefore gives `live` the same values as `local`: every capability is off, and every defect guard is skipped on both targets.
+
+The `live` columns below record how the hosted platform answered before the outage, which is what the bug reports describe. If it goes back to those answers, restore the `live` values from these tables.
+
+Live's room listing now also holds rooms without `image` or `description`: room `201` came right after the three seeded rooms, with neither field. `src/schemas/room.schema.ts` and the exported JSON Schemas therefore make both fields optional.
+
 ## Why they differ
 
 The hosted platform runs code that is **not** in the open-source project. Checked three ways:

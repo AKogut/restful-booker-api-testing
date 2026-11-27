@@ -54,7 +54,7 @@ Every confirmed platform defect gets:
 1. a report in [`docs/bug-reports/`](bug-reports/) with repro steps, evidence, impact and severity,
 2. a `guardsDefect` test that encodes the **expected correct behaviour**.
 
-This keeps defects visible instead of silently accommodated, and makes a platform fix surface immediately as a failing test rather than going unnoticed. Every guard is gated on `defects.documented` and runs only against the target whose behaviour it documents — including the header findings (BUG-010, BUG-011), which are specific to the deployment.
+This keeps defects visible instead of silently accommodated, and makes a platform fix surface immediately as a failing test rather than going unnoticed. Every guard is gated on `defects.documented` and runs only against the target whose behaviour it documents — including the header findings (BUG-010, BUG-011), which are specific to the deployment. Since 27 November 2026 the hosted platform answers like the published images, so no target documents these defects and every guard is skipped ([target-differences.md](target-differences.md#since-27-november-2026)).
 
 ### Why not `it.fails`
 
@@ -201,7 +201,7 @@ The CI reds that remained at the time were put down to a `GET` on a room another
 | `live`  | `npm run test:live`  | The deployed platform — the target every defect report describes |
 | `local` | `npm run test:local` | RBP `2.2` in Docker — offline, disposable, safe to mutate freely |
 
-They run **different versions of the same API**, so expectations are declared per target in `src/profiles/target-profile.ts` rather than hard-coded ([inventory](target-differences.md)).
+They ran **different versions of the same API** until November 2026, so expectations are declared per target in `src/profiles/target-profile.ts` rather than hard-coded ([inventory](target-differences.md)). Since 27 November 2026 both targets hold the same values.
 
 `local` is a development and exploration target, not a replacement for `live`: the defect guards document live's behaviour and are skipped elsewhere, so a green local run is not evidence about the deployed platform. CI gates on `live`.
 
