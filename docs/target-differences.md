@@ -15,6 +15,8 @@ The hosted platform came back from its [October outage](https://github.com/AKogu
 
 The `live` columns below record how the hosted platform answered before the outage, which is what the bug reports describe. If it goes back to those answers, restore the `live` values from these tables.
 
+Live's room listing now also holds rooms without `image` or `description`: room `201` came right after the three seeded rooms, with neither field. `src/schemas/room.schema.ts` and the exported JSON Schemas therefore make both fields optional.
+
 ## Why they differ
 
 The hosted platform runs code that is **not** in the open-source project. Checked three ways:

@@ -6,8 +6,8 @@ export const roomSchema = z.strictObject({
   roomName: z.string(),
   type: z.enum(ROOM_TYPES),
   accessible: z.boolean(),
-  image: z.string(),
-  description: z.string(),
+  image: z.string().optional(),
+  description: z.string().optional(),
   features: z.array(z.string()),
   roomPrice: z.number(),
 })
