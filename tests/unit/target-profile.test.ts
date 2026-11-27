@@ -3,12 +3,12 @@ import { expectedStatus, supports } from '@profiles/target-profile'
 
 describe('expectedStatus', () => {
   it('maps a created resource to the status each target returns', () => {
-    expect(expectedStatus('resource.created', 'live')).toBe(200)
+    expect(expectedStatus('resource.created', 'live')).toBe(201)
     expect(expectedStatus('resource.created', 'local')).toBe(201)
   })
 
   it('maps a rejected credential to the status each target returns', () => {
-    expect(expectedStatus('auth.rejected', 'live')).toBe(401)
+    expect(expectedStatus('auth.rejected', 'live')).toBe(403)
     expect(expectedStatus('auth.rejected', 'local')).toBe(403)
   })
 
@@ -19,13 +19,13 @@ describe('expectedStatus', () => {
 })
 
 describe('supports', () => {
-  it('reports the token-in-body contract as live-only', () => {
-    expect(supports('auth.tokenInBody', 'live')).toBe(true)
+  it('reports the token-in-body contract as unsupported on both targets', () => {
+    expect(supports('auth.tokenInBody', 'live')).toBe(false)
     expect(supports('auth.tokenInBody', 'local')).toBe(false)
   })
 
-  it('reports documented defects as live-only', () => {
-    expect(supports('defects.documented', 'live')).toBe(true)
+  it('reports documented defects as reproduced on neither target', () => {
+    expect(supports('defects.documented', 'live')).toBe(false)
     expect(supports('defects.documented', 'local')).toBe(false)
   })
 })

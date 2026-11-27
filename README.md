@@ -16,7 +16,7 @@ Production-grade API test automation framework for the [Restful Booker Platform]
 
 > **Status:** feature-complete. All eleven milestones (M0–M10) are closed; the [project board](https://github.com/users/AKogut/projects/15) records how it was built. Ongoing work is upkeep — Dependabot updates and the nightly monitoring jobs.
 >
-> **Hosted demo outage:** since its 23 October 2026 deploy, the hosted platform answers `500` on every per-id route and on its health endpoints ([#162](https://github.com/AKogut/restful-booker-api-testing/issues/162)). Until it recovers, CI and the published report run against the dockerized platform and say so on every run. The live-only defect guards are not running in the meantime.
+> **Hosted demo:** after its October 2026 outage ([#162](https://github.com/AKogut/restful-booker-api-testing/issues/162)), the hosted platform came back on 27 November 2026 answering like the published images. Both targets now share one set of expectations, and the defect guards are skipped on both — see [docs/target-differences.md](docs/target-differences.md#since-27-november-2026).
 
 ## What it demonstrates
 
@@ -254,10 +254,10 @@ The target is selected by `ENV_FILE`; each env file sets `TEST_MODE`, which driv
 
 ### They are not the same API
 
-The hosted platform runs code that is not in the open-source project — verified against the `2.2` images, the `latest` images and upstream `trunk` source, all three of which agree with each other and disagree with live. So the suite does not pretend one set of expectations fits both:
+Until its October 2026 outage, the hosted platform ran code that was not in the open-source project — verified against the `2.2` images, the `latest` images and upstream `trunk` source, all three of which agree with each other and disagreed with live. Since 27 November 2026 it answers like the images, so both columns of the profile hold the same values; the profile stays, so a difference that comes back is a one-line change. The suite never pretends one set of expectations fits both:
 
 ```ts
-expect(response.status).toBe(expectedStatus('auth.rejected'))   // 401 live, 403 local
+expect(response.status).toBe(expectedStatus('auth.rejected'))   // 403 on both since 27 Nov 2026; 401 live before
 itWhenSupported('auth.tokenInBody')('returns the token in the body', …)
 ```
 
